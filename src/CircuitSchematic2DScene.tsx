@@ -195,8 +195,8 @@ export default function CircuitSchematic2D({
           return (
             <SchematicTerminal 
               key={node.id}
-              position={position} 
-              label={node.id} 
+              position={position}
+              label={node.id}
             />
           );
         }
@@ -227,7 +227,6 @@ export default function CircuitSchematic2D({
                   <SchematicResistor
                     type="resistor"
                     position={position}
-                    label={node.id}
                   />
                 </group>
               );
@@ -237,7 +236,6 @@ export default function CircuitSchematic2D({
                   <SchematicInductor
                     type="inductor"
                     position={position}
-                    label={node.id}
                   />
                 </group>
               );
@@ -247,7 +245,6 @@ export default function CircuitSchematic2D({
                   <SchematicCapacitor
                     type="capacitor"
                     position={position}
-                    label={node.id}
                   />
                 </group>
               );
@@ -257,7 +254,6 @@ export default function CircuitSchematic2D({
                   <SchematicLED
                     type="led"
                     position={position}
-                    label={node.id}
                   />
                 </group>
               );
@@ -267,7 +263,6 @@ export default function CircuitSchematic2D({
                   <SchematicTransistor
                     type="transistor"
                     position={position}
-                    label={node.id}
                   />
                 </group>
               );
@@ -277,7 +272,6 @@ export default function CircuitSchematic2D({
                   <SchematicDiode
                     type="diode"
                     position={position}
-                    label={node.id}
                   />
                 </group>
               );
@@ -287,7 +281,6 @@ export default function CircuitSchematic2D({
                   <SchematicSwitch
                     type="switch"
                     position={position}
-                    label={node.id}
                   />
                 </group>
               );
@@ -297,7 +290,6 @@ export default function CircuitSchematic2D({
                   <SchematicOpAmp
                     type="opamp"
                     position={position}
-                    label={node.id}
                   />
                 </group>
               );
@@ -307,7 +299,6 @@ export default function CircuitSchematic2D({
                   <SchematicIC
                     type="ic"
                     position={position}
-                    label={node.id}
                   />
                 </group>
               );
