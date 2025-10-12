@@ -37,9 +37,10 @@ interface GameSummaryProps {
   difficulty: "easy" | "medium" | "hard";
   onRestart: () => void;
   onChangeDifficulty: (newDifficulty: "easy" | "medium" | "hard") => void;
+  onBackToMenu: () => void;
 }
 
-function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, onRestart, onChangeDifficulty }: GameSummaryProps) {
+function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, onRestart, onChangeDifficulty, onBackToMenu }: GameSummaryProps) {
   const totalQuestions = getTotalQuestionsForDifficulty(difficulty);
   const accuracy = questionsAnswered > 0 ? Math.round((questionsCorrect / questionsAnswered) * 100) : 0;
   const averageScore = questionsAnswered > 0 ? Math.round(score / questionsAnswered) : 0;
@@ -108,6 +109,13 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
                 </button>
               ))}
             </div>
+            
+            <button
+              onClick={onBackToMenu}
+              className="w-full py-2 px-4 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-medium transition-colors"
+            >
+              🏠 Back to Menu
+            </button>
           </div>
         </div>
       </div>
@@ -461,6 +469,7 @@ export const Block: React.FC<BlockProps> = ({
         difficulty={currentDifficulty}
         onRestart={handleGameRestart}
         onChangeDifficulty={handleChangeDifficultyFromSummary}
+        onBackToMenu={handleBackToMenu}
       />
     );
   }
