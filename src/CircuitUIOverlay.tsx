@@ -194,11 +194,9 @@ const getComponentsFromTemplate = (template: CircuitTemplate, symbolColor: strin
       </svg>
     ) },
   ];
-
-  // Get unique component types from the template's required components
-  const requiredTypes = template.requiredComponents.map(comp => comp.type);
-  return allComponents.filter(comp => requiredTypes.includes(comp.type));
+  return allComponents;
 };
+
 
 export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
   currentTemplate,
