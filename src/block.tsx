@@ -1,78 +1,25 @@
-import React, { Suspense, useEffect, useRef } from "react";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, useGLTF, useAnimations, Environment, Text, Html } from "@react-three/drei";
-import { EffectComposer, Bloom, LUT } from "@react-three/postprocessing";
-import * as THREE from "three";
+import React, { Suspense, useState } from "react";
+import { Html } from "@react-three/drei";
+import { CircuitUIOverlay } from "./CircuitUIOverlay";
+import ThreeCircuit from "./ThreeCircuit";
+import CircuitSchematic2DScene from "./CircuitSchematic2DScene";
 
 interface BlockProps {
+  difficulty?: "easy" | "medium" | "hard";
+  theme?: "light" | "dark" | string;
+  playerCount?: number;
   title?: string;
   description?: string;
-  modelPath?: string;
   autoRotate?: boolean;
-  playAnimations?: boolean;
   cameraPosition?: [number, number, number];
+  use3DCircuit?: boolean;
+  viewMode?: "2d-schematic" | "3d-realistic";
+  showControls?: boolean;
 }
 
-function CubeCascadeModel({ modelPath = "https://content.mext.app/block/quantum_cube.glb", playAnimations = true, ...props }) {
-  const group = useRef<THREE.Group>(null);
-  const { scene, animations } = useGLTF(modelPath);
-  const { actions, names } = useAnimations(animations, group);
-  
-  useEffect(() => {
-    if (actions && names.length > 0 && playAnimations) {
-      names.forEach((name) => {
-        const action = actions[name];
-        if (action) {
-          action.reset();
-          action.play();
-          action.setLoop(THREE.LoopRepeat, Infinity);
-        }
-      });
-    }
-    
-    return () => {
-      if (actions && names.length > 0) {
-        names.forEach((name) => {
-          const action = actions[name];
-          if (action) {
-            console.log(`Stopping animation: ${name}`);
-            action.stop();
-          }
-        });
-      }
-    };
-  }, [actions, names, playAnimations]);
-  
-  return (
-    <group ref={group} {...props}>
-      <primitive object={scene} />
-    </group>
-  );
-}
+type ViewMode = "2d-schematic" | "3d-realistic";
 
-function Scene({ autoRotate = true, playAnimations = true }: { autoRotate: boolean, playAnimations?: boolean }) {
-  return (
-    <>
-      <EffectComposer>
-        <Bloom mipmapBlur levels={9} intensity={4} luminanceThreshold={0.2} luminanceSmoothing={1} />
-      </EffectComposer>
-      <Suspense fallback={null}>
-        <CubeCascadeModel position={[0, 0, 0]} playAnimations={playAnimations} />
-      </Suspense>
-      <OrbitControls
 
-        enablePan={true}
-        enableZoom={true}
-        enableRotate={true}
-        autoRotate={autoRotate}
-        autoRotateSpeed={2}
-        maxPolarAngle={Math.PI / 2}
-        minDistance={3}
-        maxDistance={20}
-      />
-    </>
-  );
-}
 
 function LoadingSpinner() {
   return (
@@ -83,29 +30,154 @@ function LoadingSpinner() {
   );
 }
 
-export const Block: React.FC<BlockProps> = ({ 
+export const Block: React.FC<BlockProps> = ({
+  difficulty = "easy",
+  theme = "light",
+  playerCount = 1,
   autoRotate = true,
-  playAnimations = true,
-  cameraPosition = [10, 10, 10]
+  cameraPosition = [10, 10, 10],
+  use3DCircuit = false,
+  viewMode: initialViewMode = "2d-schematic",
+  showControls = true,
 }) => {
+  // State for managing view mode internally
+  const [currentViewMode, setCurrentViewMode] = useState<ViewMode>(
+    use3DCircuit ? "3d-realistic" : initialViewMode
+  );
+
+  // Example: adjust background based on theme
+  const backgroundColor = theme === "dark" ? "#111" : "#fafafa";
+
+  // Mode info descriptions
+  const getModeInfo = (mode: ViewMode): string => {
+    switch(mode) {
+      case '2d-schematic':
+        return 'Traditional circuit diagram view with draggable symbols and UI overlay';
+      case '3d-realistic':
+        return 'Detailed 3D circuit visualization';
+      default:
+        return '';
+    }
+  };
+
+  // Render the current view mode
+  const renderCurrentView = () => {
+    switch (currentViewMode) {
+      case "2d-schematic":
+        return (
+          <>
+            <CircuitSchematic2DScene />
+            {/* 2D Drag-and-drop Overlay */}
+            <CircuitUIOverlay difficulty={difficulty} playerCount={playerCount} theme={theme} />
+          </>
+        );
+
+      case "3d-realistic":
+      default:
+        return <ThreeCircuit />;
+    }
+  };
+
   return (
-    <div className="relative w-full h-full">
-      <Canvas
-        camera={{ position: cameraPosition, fov: 90 }}
-        gl={{ antialias: true, alpha: true }}
-        className="w-full h-full"
-      >
-        <Suspense fallback={
-          <Html center>
-            <LoadingSpinner />
-          </Html>
-        }>
-          <Scene 
-            autoRotate={autoRotate}
-            playAnimations={playAnimations}
-          />
-        </Suspense>
-      </Canvas>
+    <div className="relative w-full h-full" style={{ backgroundColor }}>
+      {/* Render the current view */}
+      {renderCurrentView()}
+
+      {/* Mode Selection Controls */}
+      {showControls && (
+        <div className="absolute top-5 left-5 z-50" 
+             style={{
+               background: 'rgba(255, 255, 255, 0.9)',
+               padding: '15px',
+               borderRadius: '8px',
+               boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+               fontFamily: 'Arial, sans-serif'
+             }}>
+          <h3 style={{ 
+            margin: '0 0 10px 0', 
+            fontSize: '16px', 
+            fontWeight: 'bold',
+            color: '#333'
+          }}>
+            Circuit Visualization Demo
+          </h3>
+          
+          <button
+            onClick={() => setCurrentViewMode('2d-schematic')}
+            style={{
+              display: 'block',
+              width: '200px',
+              margin: '5px 0',
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '4px',
+              background: currentViewMode === '2d-schematic' ? '#28a745' : '#007acc',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+            onMouseOver={(e) => {
+              if (currentViewMode !== '2d-schematic') {
+                e.currentTarget.style.background = '#005a9e';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (currentViewMode !== '2d-schematic') {
+                e.currentTarget.style.background = '#007acc';
+              }
+            }}
+          >
+            2D Schematic View
+          </button>
+
+          <button
+            onClick={() => setCurrentViewMode('3d-realistic')}
+            style={{
+              display: 'block',
+              width: '200px',
+              margin: '5px 0',
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '4px',
+              background: currentViewMode === '3d-realistic' ? '#28a745' : '#007acc',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+            onMouseOver={(e) => {
+              if (currentViewMode !== '3d-realistic') {
+                e.currentTarget.style.background = '#005a9e';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (currentViewMode !== '3d-realistic') {
+                e.currentTarget.style.background = '#007acc';
+              }
+            }}
+          >
+            3D Realistic Circuit
+          </button>
+
+          <p style={{ 
+            fontSize: '12px', 
+            margin: '8px 0 5px 0', 
+            color: '#666' 
+          }}>
+            <small>Switch between different visualization modes</small>
+          </p>
+
+          <div style={{
+            marginTop: '10px',
+            padding: '8px',
+            background: 'rgba(0, 120, 204, 0.1)',
+            borderRadius: '4px',
+            fontSize: '12px',
+            color: '#007acc'
+          }}>
+            <strong>{currentViewMode.charAt(0).toUpperCase() + currentViewMode.slice(1).replace('-', ' ')}:</strong> {getModeInfo(currentViewMode)}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

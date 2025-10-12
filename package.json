@@ -12,6 +12,8 @@
     "@react-three/drei": "^10.0.5",
     "@react-three/fiber": "^9.1.0",
     "@react-three/postprocessing": "^3.0.4",
+    "circuit-json": "^0.0.277",
+    "circuit-to-svg": "^0.0.233",
     "peerjs": "^1.5.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
