@@ -1,11 +1,17 @@
 import * as React from "react";
-import { Canvas } from "@react-three/fiber";
-import { SchematicResistor, SchematicCapacitor, SchematicInductor } from "./CircuitSchematic2D";
+import { CircuitTemplate } from "./circuitLogic";
 
 interface CircuitUIOverlayProps {
-  difficulty: "easy" | "medium" | "hard";
+  currentTemplate: CircuitTemplate;
   theme: string;
   playerCount: number;
+  onComponentSelected?: (componentType: string | null) => void;
+  selectedComponent?: string | null;
+  onValidateCircuit?: () => void;
+  hasPlacedComponents?: boolean;
+  score?: number;
+  questionsAnswered?: number;
+  questionsCorrect?: number;
 }
 
 interface Component {
@@ -15,30 +21,7 @@ interface Component {
   symbol: React.ReactNode;
 }
 
-interface BoardItem extends Component {
-  x: number;
-  y: number;
-  instanceId: string;
-}
 
-// Component to render the appropriate schematic component
-const SchematicComponent = ({ type, label, position, onDrag }: {
-  type: string;
-  label: string;
-  position: [number, number, number];
-  onDrag?: (position: [number, number, number]) => void;
-}) => {
-  switch (type) {
-    case 'R':
-      return <SchematicResistor position={position} onDrag={onDrag} type="resistor" label={label} />;
-    case 'C':
-      return <SchematicCapacitor position={position} onDrag={onDrag} type="capacitor" label={label} />;
-    case 'L':
-      return <SchematicInductor position={position} onDrag={onDrag} type="inductor" label={label} />;
-    default:
-      return <SchematicResistor position={position} onDrag={onDrag} type="resistor" label={label} />;
-  }
-};
 
 // SVG Schematic Symbols
 const ResistorSymbol = ({ color = "#333333" }: { color?: string }) => (
@@ -119,73 +102,69 @@ const InductorSymbol = ({ color = "#333333" }: { color?: string }) => (
   </svg>
 );
 
-const getComponentsByDifficulty = (difficulty: string): Component[] => {
-  const baseComponents = [
+const getComponentsFromTemplate = (template: CircuitTemplate): Component[] => {
+  const allComponents = [
     { id: "R", type: "R", label: "Resistor", symbol: <ResistorSymbol /> },
     { id: "L", type: "L", label: "Inductor", symbol: <InductorSymbol /> },
     { id: "C", type: "C", label: "Capacitor", symbol: <CapacitorSymbol /> },
+    { id: "D", type: "D", label: "Diode", symbol: (
+      <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
+        <line x1="2" y1="10" x2="16" y2="10" stroke="#333333" strokeWidth="2" />
+        <polygon points="16,6 16,14 24,10" fill="#333333" />
+        <line x1="24" y1="6" x2="24" y2="14" stroke="#333333" strokeWidth="2" />
+        <line x1="24" y1="10" x2="38" y2="10" stroke="#333333" strokeWidth="2" />
+        <circle cx="2" cy="10" r="1.5" fill="#333333" />
+        <circle cx="38" cy="10" r="1.5" fill="#333333" />
+      </svg>
+    ) },
+    { id: "T", type: "T", label: "Transistor", symbol: (
+      <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
+        <line x1="2" y1="10" x2="12" y2="10" stroke="#333333" strokeWidth="2" />
+        <line x1="12" y1="6" x2="12" y2="14" stroke="#333333" strokeWidth="3" />
+        <line x1="12" y1="8" x2="20" y2="4" stroke="#333333" strokeWidth="2" />
+        <line x1="12" y1="12" x2="20" y2="16" stroke="#333333" strokeWidth="2" />
+        <line x1="20" y1="4" x2="20" y2="2" stroke="#333333" strokeWidth="2" />
+        <line x1="20" y1="16" x2="20" y2="18" stroke="#333333" strokeWidth="2" />
+        <polygon points="18,15 20,16 19,17" fill="#333333" />
+        <circle cx="2" cy="10" r="1.5" fill="#333333" />
+        <circle cx="20" cy="2" r="1.5" fill="#333333" />
+        <circle cx="20" cy="18" r="1.5" fill="#333333" />
+      </svg>
+    ) },
   ];
 
-  switch (difficulty) {
-    case "easy":
-      return baseComponents.slice(0, 2);
-    case "medium":
-      return baseComponents;
-    case "hard":
-      return [
-        ...baseComponents,
-        { id: "D", type: "D", label: "Diode", symbol: (
-          <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
-            <line x1="2" y1="10" x2="16" y2="10" stroke="#333333" strokeWidth="2" />
-            <polygon points="16,6 16,14 24,10" fill="#333333" />
-            <line x1="24" y1="6" x2="24" y2="14" stroke="#333333" strokeWidth="2" />
-            <line x1="24" y1="10" x2="38" y2="10" stroke="#333333" strokeWidth="2" />
-            <circle cx="2" cy="10" r="1.5" fill="#333333" />
-            <circle cx="38" cy="10" r="1.5" fill="#333333" />
-          </svg>
-        ) },
-        { id: "T", type: "T", label: "Transistor", symbol: (
-          <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
-            <line x1="2" y1="10" x2="12" y2="10" stroke="#333333" strokeWidth="2" />
-            <line x1="12" y1="6" x2="12" y2="14" stroke="#333333" strokeWidth="3" />
-            <line x1="12" y1="8" x2="20" y2="4" stroke="#333333" strokeWidth="2" />
-            <line x1="12" y1="12" x2="20" y2="16" stroke="#333333" strokeWidth="2" />
-            <line x1="20" y1="4" x2="20" y2="2" stroke="#333333" strokeWidth="2" />
-            <line x1="20" y1="16" x2="20" y2="18" stroke="#333333" strokeWidth="2" />
-            <polygon points="18,15 20,16 19,17" fill="#333333" />
-            <circle cx="2" cy="10" r="1.5" fill="#333333" />
-            <circle cx="20" cy="2" r="1.5" fill="#333333" />
-            <circle cx="20" cy="18" r="1.5" fill="#333333" />
-          </svg>
-        ) },
-      ];
-    default:
-      return baseComponents;
-  }
+  // Get unique component types from the template's required components
+  const requiredTypes = template.requiredComponents.map(comp => comp.type);
+  return allComponents.filter(comp => requiredTypes.includes(comp.type));
 };
 
 export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
-  difficulty,
+  currentTemplate,
   theme,
   playerCount,
+  onComponentSelected,
+  selectedComponent: selectedFromParent,
+  onValidateCircuit,
+  hasPlacedComponents = false,
+  score = 0,
+  questionsAnswered = 0,
+  questionsCorrect = 0,
 }) => {
-  const [boardItems, setBoardItems] = React.useState<BoardItem[]>([]);
-  const [selectedComponent, setSelectedComponent] = React.useState<Component | null>(null);
-  const [instanceCounter, setInstanceCounter] = React.useState(1);
+  const difficulty = currentTemplate.difficulty;
 
-  const components = getComponentsByDifficulty(difficulty);
+  const components = getComponentsFromTemplate(currentTemplate);
 
   // Handle ESC key to cancel selection
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && selectedComponent) {
-        setSelectedComponent(null);
+      if (e.key === 'Escape' && selectedFromParent) {
+        onComponentSelected?.(null);
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedComponent]);
+  }, [selectedFromParent, onComponentSelected]);
 
   const isDark = theme === "dark";
   const sidebarBg = isDark ? "bg-gray-800/90" : "bg-white/90";
@@ -195,56 +174,62 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
   const borderColor = isDark ? "border-gray-600" : "border-gray-400";
 
   const handleComponentClick = (component: Component) => {
-    if (selectedComponent?.id === component.id) {
-      setSelectedComponent(null); // Deselect if clicking the same component
+    if (selectedFromParent === component.type) {
+      onComponentSelected?.(null); // Deselect if clicking the same component
     } else {
-      setSelectedComponent(component);
+      onComponentSelected?.(component.type); // Notify parent about selection
     }
   };
 
-  const handleBoardClick = (e: React.MouseEvent) => {
-    if (!selectedComponent) return;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    // Account for the offset of the clickable area
-    const x = e.clientX - rect.left + 250; // Add left offset
-    const y = e.clientY - rect.top + 20; // Add top offset
 
-    const newItem: BoardItem = {
-      ...selectedComponent,
-      x,
-      y,
-      instanceId: `${selectedComponent.type}${instanceCounter}`,
-    };
-
-    setBoardItems([...boardItems, newItem]);
-    setInstanceCounter(instanceCounter + 1);
-    setSelectedComponent(null); // Clear selection after adding
-  };
-
-  const removeItem = (instanceId: string) => {
-    setBoardItems(boardItems.filter(item => item.instanceId !== instanceId));
-  };
-
-  const clearBoard = () => {
-    setBoardItems([]);
-    setInstanceCounter(1);
-  };
 
   return (
     <div className="absolute inset-0 pointer-events-none">
-      <div className={`absolute top-4 right-4 ${sidebarBg} p-3 rounded-lg shadow-lg pointer-events-auto`}>
+      <div className={`absolute top-4 left-4 ${sidebarBg} p-3 rounded-lg shadow-lg pointer-events-auto`}>
         <div className={`text-sm ${textColor} font-medium`}>
+          <div className="font-bold mb-1">{currentTemplate.name}</div>
           <div>Difficulty: <span className="capitalize">{difficulty}</span></div>
           <div>Players: {playerCount}</div>
-          <div>Components: {boardItems.length}</div>
+        </div>
+        <div className={`text-xs ${textColor} opacity-75 mt-2`}>
+          {currentTemplate.description}
         </div>
       </div>
 
-      <div className={`absolute left-4 top-1/2 transform -translate-y-1/2 ${sidebarBg} p-4 rounded-lg shadow-lg pointer-events-auto`}>
+      {/* Scoreboard */}
+      <div className={`absolute left-4 bottom-4 ${sidebarBg} p-3 rounded-lg shadow-lg pointer-events-auto`}>
+        <div className={`text-sm ${textColor} font-bold mb-2 text-center`}>Scoreboard</div>
+        <div className={`text-xs ${textColor} space-y-1`}>
+          <div className="flex justify-between">
+            <span>Score:</span>
+            <span className="font-semibold text-blue-600">{score}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Questions:</span>
+            <span className="font-semibold">{questionsAnswered}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Correct:</span>
+            <span className="font-semibold text-green-600">{questionsCorrect}</span>
+          </div>
+          {questionsAnswered > 0 && (
+            <div className="flex justify-between border-t pt-1 mt-1">
+              <span>Accuracy:</span>
+              <span className="font-semibold text-purple-600">
+                {Math.round((questionsCorrect / questionsAnswered) * 100)}%
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className={`absolute top-4 right-4 transform ${sidebarBg} p-4 rounded-lg shadow-lg pointer-events-auto`}>
         <h3 className={`text-sm font-bold ${textColor} mb-2`}>Components</h3>
+        <div className={`text-xs ${textColor} opacity-75 mb-2`}>
+          Required: {currentTemplate.requiredComponents.map(comp => `${comp.count}×${comp.type}`).join(', ')}
+        </div>
         <p className={`text-xs ${textColor} opacity-75 mb-3`}>
-          {selectedComponent ? 'Click on the circuit to place' : 'Click to select, then click on circuit'}
+          {selectedFromParent ? 'Now click on a blank slot in the circuit' : 'Select a component, then click on a blank slot'}
         </p>
         <div className="flex flex-col gap-2">
           {components.map((component) => (
@@ -252,7 +237,7 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
               key={component.id}
               onClick={() => handleComponentClick(component)}
               className={`cursor-pointer p-3 ${componentBg} ${componentHover} rounded-md transition-colors ${textColor} text-center select-none ${
-                selectedComponent?.id === component.id ? 'ring-2 ring-blue-500' : ''
+                selectedFromParent === component.type ? 'ring-2 ring-blue-500' : ''
               }`}
             >
               <div className="mb-1 flex justify-center">{component.symbol}</div>
@@ -262,90 +247,31 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
         </div>
         
         <div className="mt-4 space-y-2">
-          {selectedComponent && (
+          {selectedFromParent && (
             <button
-              onClick={() => setSelectedComponent(null)}
+              onClick={() => {
+                onComponentSelected?.(null);
+              }}
               className={`w-full px-3 py-2 text-xs ${isDark ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-500 hover:bg-gray-600'} text-white rounded transition-colors`}
             >
               Cancel Selection
             </button>
           )}
-          <button
-            onClick={clearBoard}
-            className={`w-full px-3 py-2 text-xs ${isDark ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'} text-white rounded transition-colors`}
-          >
-            Clear Board
-          </button>
-        </div>
-      </div>
-
-      <div
-        className={`absolute inset-0 border-2 border-dashed ${borderColor} ${selectedComponent ? 'border-blue-500 bg-blue-50/10' : 'border-transparent'} transition-colors pointer-events-none`}
-      >
-        {/* Clickable area that excludes the sidebars */}
-        <div
-          className={`absolute inset-0 ${selectedComponent ? 'pointer-events-auto' : 'pointer-events-none'}`}
-          style={{
-            left: '250px', // Leave space for left sidebar
-            right: '200px', // Leave space for right sidebar
-            top: '20px',
-            bottom: '80px' // Leave space for bottom notification
-          }}
-          onClick={handleBoardClick}
-        />
-        {boardItems.map((item) => (
-          <div
-            key={item.instanceId}
-            className="absolute pointer-events-auto"
-            style={{
-              left: item.x,
-              top: item.y,
-              transform: "translate(-50%, -50%)",
-              width: "120px",
-              height: "80px",
-            }}
-          >
-            <Canvas
-              orthographic
-              camera={{ position: [0, 0, 5], zoom: 50 }}
-              style={{ background: 'transparent' }}
-            >
-              <ambientLight intensity={0.8} />
-              <directionalLight position={[10, 10, 5]} intensity={0.5} />
-              <SchematicComponent
-                type={item.type}
-                label={item.instanceId}
-                position={[0, 0, 0]}
-                onDrag={() => {}} // We'll handle dragging differently for placed components
-              />
-            </Canvas>
+          
+          {hasPlacedComponents && (
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                removeItem(item.instanceId);
+              onClick={() => {
+                onValidateCircuit?.();
               }}
-              className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full hover:bg-red-600 transition-colors flex items-center justify-center"
-              title={`Click to remove ${item.instanceId}`}
+              className={`w-full px-3 py-2 text-xs bg-green-600 hover:bg-green-700 text-white rounded transition-colors font-medium`}
             >
-              ×
+              Submit & Validate Circuit
             </button>
-          </div>
-        ))}
-
-        {selectedComponent && (
-          <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 ${textColor} text-center pointer-events-none`}>
-            <div className="text-lg opacity-50">Click to place {selectedComponent.label}</div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {boardItems.length >= 2 && (
-        <div className={`absolute bottom-4 left-1/2 transform -translate-x-1/2 ${sidebarBg} p-3 rounded-lg shadow-lg pointer-events-auto`}>
-          <div className={`text-sm ${textColor}`}>
-            🧪 Circuit Analysis: <span className="text-yellow-500">Ready to validate</span>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

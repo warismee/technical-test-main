@@ -346,4 +346,26 @@ function SchematicWire({ from, to }: { from: [number, number, number]; to: [numb
   );
 }
 
-export { SchematicResistor, SchematicCapacitor, SchematicInductor, SchematicWire };
+function SchematicTerminal({ position, label }: { position: [number, number, number]; label: string }) {
+  return (
+    <group position={position}>
+      {/* Terminal connection point */}
+      <mesh>
+        <circleGeometry args={[0.1, 16]} />
+        <meshBasicMaterial color="#ff4444" />
+      </mesh>
+      {/* Terminal label */}
+      <Text
+        position={[0, -0.4, 0]}
+        fontSize={0.2}
+        color="#333333"
+        anchorX="center"
+        anchorY="middle"
+      >
+        {label}
+      </Text>
+    </group>
+  );
+}
+
+export { SchematicResistor, SchematicCapacitor, SchematicInductor, SchematicWire, SchematicTerminal };

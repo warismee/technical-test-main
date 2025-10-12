@@ -45,6 +45,26 @@ export const circuitTemplates: CircuitTemplate[] = [
     }
   },
   {
+    id: 'easy-2',
+    difficulty: 'easy',
+    name: 'Basic RC Circuit',
+    description: 'Connect a resistor and capacitor in series',
+    requiredComponents: [
+      { type: 'R', count: 1 },
+      { type: 'C', count: 1 }
+    ],
+    targetTopology: [
+      { id: 'A', type: 'terminal', connections: ['R1'], position: { x: 100, y: 200 } },
+      { id: 'R1', type: 'component', connections: ['A', 'C1'], position: { x: 200, y: 200 } },
+      { id: 'C1', type: 'component', connections: ['R1', 'B'], position: { x: 300, y: 200 } },
+      { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 400, y: 200 } }
+    ],
+    validationRules: {
+      seriesConnections: [['A', 'R1', 'C1', 'B']],
+      requiredPath: ['A', 'B']
+    }
+  },
+  {
     id: 'medium-1',
     difficulty: 'medium',
     name: 'RC Parallel Circuit',
@@ -61,6 +81,54 @@ export const circuitTemplates: CircuitTemplate[] = [
     ],
     validationRules: {
       parallelConnections: [['R1', 'C1']],
+      requiredPath: ['A', 'B']
+    }
+  },
+  {
+    id: 'medium-2',
+    difficulty: 'medium',
+    name: 'RLC Series Circuit',
+    description: 'Connect resistor, inductor, and capacitor in series',
+    requiredComponents: [
+      { type: 'R', count: 1 },
+      { type: 'L', count: 1 },
+      { type: 'C', count: 1 }
+    ],
+    targetTopology: [
+      { id: 'A', type: 'terminal', connections: ['R1'], position: { x: 50, y: 200 } },
+      { id: 'R1', type: 'component', connections: ['A', 'L1'], position: { x: 150, y: 200 } },
+      { id: 'L1', type: 'component', connections: ['R1', 'C1'], position: { x: 250, y: 200 } },
+      { id: 'C1', type: 'component', connections: ['L1', 'B'], position: { x: 350, y: 200 } },
+      { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 450, y: 200 } }
+    ],
+    validationRules: {
+      seriesConnections: [['A', 'R1', 'L1', 'C1', 'B']],
+      requiredPath: ['A', 'B']
+    }
+  },
+  {
+    id: 'hard-1',
+    difficulty: 'hard',
+    name: 'Complex Mixed Circuit',
+    description: 'Build a circuit with series and parallel combinations',
+    requiredComponents: [
+      { type: 'R', count: 2 },
+      { type: 'C', count: 1 },
+      { type: 'L', count: 1 }
+    ],
+    targetTopology: [
+      { id: 'A', type: 'terminal', connections: ['R1'], position: { x: 100, y: 200 } },
+      { id: 'R1', type: 'component', connections: ['A', 'J1'], position: { x: 200, y: 200 } },
+      { id: 'J1', type: 'junction', connections: ['R1', 'R2', 'L1'], position: { x: 300, y: 200 } },
+      { id: 'R2', type: 'component', connections: ['J1', 'J2'], position: { x: 400, y: 150 } },
+      { id: 'L1', type: 'component', connections: ['J1', 'J2'], position: { x: 400, y: 250 } },
+      { id: 'J2', type: 'junction', connections: ['R2', 'L1', 'C1'], position: { x: 500, y: 200 } },
+      { id: 'C1', type: 'component', connections: ['J2', 'B'], position: { x: 600, y: 200 } },
+      { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 700, y: 200 } }
+    ],
+    validationRules: {
+      seriesConnections: [['A', 'R1', 'J1'], ['J2', 'C1', 'B']],
+      parallelConnections: [['R2', 'L1']],
       requiredPath: ['A', 'B']
     }
   }
