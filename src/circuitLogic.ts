@@ -930,6 +930,29 @@ export function generateRandomChallenge(difficulty: 'easy' | 'medium' | 'hard'):
   return templatesForDifficulty[randomIndex];
 }
 
+// Generate unique challenge avoiding already shown ones
+export function generateUniqueChallenge(
+  difficulty: 'easy' | 'medium' | 'hard', 
+  excludeIds: string[] = []
+): CircuitTemplate | null {
+  const templatesForDifficulty = circuitTemplates.filter(
+    t => t.difficulty === difficulty && !excludeIds.includes(t.id)
+  );
+  
+  // If all questions have been shown, return null to indicate game completion
+  if (templatesForDifficulty.length === 0) {
+    return null;
+  }
+  
+  const randomIndex = Math.floor(Math.random() * templatesForDifficulty.length);
+  return templatesForDifficulty[randomIndex];
+}
+
+// Get total number of questions for a difficulty level
+export function getTotalQuestionsForDifficulty(difficulty: 'easy' | 'medium' | 'hard'): number {
+  return circuitTemplates.filter(t => t.difficulty === difficulty).length;
+}
+
 
 
 // Utility function to get component pin configuration

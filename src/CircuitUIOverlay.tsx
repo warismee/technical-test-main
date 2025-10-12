@@ -12,6 +12,8 @@ interface CircuitUIOverlayProps {
   score?: number;
   questionsAnswered?: number;
   questionsCorrect?: number;
+  currentDifficulty?: "easy" | "medium" | "hard";
+  onBackToMenu?: () => void;
 }
 
 interface Component {
@@ -207,6 +209,8 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
   score = 0,
   questionsAnswered = 0,
   questionsCorrect = 0,
+  currentDifficulty = "easy",
+  onBackToMenu,
 }) => {
   const difficulty = currentTemplate.difficulty;
 
@@ -246,7 +250,40 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
       <div className={`absolute top-4 left-4 ${sidebarBg} p-3 rounded-lg shadow-lg pointer-events-auto`}>
         <div className={`text-sm ${textColor} font-medium`}>
           <div className="font-bold mb-1">{currentTemplate.name}</div>
-          <div>Difficulty: <span className="capitalize">{difficulty}</span></div>
+          
+          {/* Current Difficulty Display */}
+          <div className="mb-2">
+            <div className="text-xs mb-1">Difficulty:</div>
+            <div className={`inline-block px-3 py-1 text-xs rounded font-medium ${
+              currentDifficulty === 'easy' 
+                ? 'bg-green-500 text-white' 
+                : currentDifficulty === 'medium'
+                ? 'bg-yellow-500 text-white'
+                : 'bg-red-500 text-white'
+            }`}>
+              {currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}
+            </div>
+            <div className={`text-xs ${textColor} opacity-75 mt-1`}>
+              {currentDifficulty === 'easy' && 'Simple circuits with basic components'}
+              {currentDifficulty === 'medium' && 'More complex circuits with multiple components'}
+              {currentDifficulty === 'hard' && 'Advanced circuits with specialized components'}
+            </div>
+          </div>
+          
+          {/* Back to Menu Button */}
+          <div className="mb-2">
+            <button
+              onClick={() => onBackToMenu?.()}
+              className={`w-full px-3 py-2 text-xs rounded font-medium transition-colors ${
+                isDark 
+                  ? 'bg-gray-600 hover:bg-gray-700 text-white' 
+                  : 'bg-gray-500 hover:bg-gray-600 text-white'
+              }`}
+            >
+              🏠 Back to Menu
+            </button>
+          </div>
+          
           <div>Players: {playerCount}</div>
         </div>
         <div className={`text-xs ${textColor} opacity-75 mt-2`}>
