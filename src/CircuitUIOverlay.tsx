@@ -1,5 +1,6 @@
 import * as React from "react";
 import { CircuitTemplate } from "./circuitLogic";
+import { MdHome, MdLightMode, MdDarkMode, MdCheck } from "react-icons/md";
 
 interface CircuitUIOverlayProps {
   currentTemplate: CircuitTemplate;
@@ -284,7 +285,9 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
                   : 'bg-gray-500 hover:bg-gray-600 text-white'
               }`}
             >
-              🏠 Back to Menu
+              <span className="flex items-center justify-center gap-1">
+                <MdHome size={14} /> Back to Menu
+              </span>
             </button>
           </div>
           
@@ -364,7 +367,9 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
               }}
               className={`w-full px-3 py-2 text-xs bg-green-600 hover:bg-green-700 text-white rounded transition-colors font-medium`}
             >
-              Submit & Validate Circuit
+              <span className="flex items-center justify-center gap-1">
+                <MdCheck size={14} /> Submit & Validate Circuit
+              </span>
             </button>
           )}
           
@@ -379,7 +384,10 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
               }`}
               title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             >
-              {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
+              <span className="flex items-center justify-center gap-1">
+                {isDarkMode ? <MdLightMode size={14} /> : <MdDarkMode size={14} />}
+                {isDarkMode ? 'Light Mode' : 'Dark Mode'}
+              </span>
             </button>
           )}
         </div>

@@ -3,6 +3,25 @@ import { Html } from "@react-three/drei";
 import { CircuitUIOverlay } from "./CircuitUIOverlay";
 import CircuitSchematic2DScene from "./CircuitSchematic2DScene";
 import { circuitTemplates, generateRandomChallenge, generateUniqueChallenge, validateCircuit, getTotalQuestionsForDifficulty } from "./circuitLogic";
+import { 
+  MdLightMode, 
+  MdDarkMode, 
+  MdCheckCircle, 
+  MdCancel,
+  MdRefresh,
+  MdHome,
+  MdArrowForward 
+} from "react-icons/md";
+import { 
+  FaTrophy, 
+  FaBullseye, 
+  FaThumbsUp, 
+  FaDumbbell,
+  FaSeedling,
+  FaBolt,
+  FaFire
+} from "react-icons/fa";
+import { IoSparkles } from "react-icons/io5";
 
 interface BlockProps {
   difficulty?: "easy" | "medium" | "hard";
@@ -67,12 +86,12 @@ function QuestionSummary({
             }`}
             title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
-            {isDarkMode ? '☀️' : '🌙'}
+            {isDarkMode ? <MdLightMode size={20} /> : <MdDarkMode size={20} />}
           </button>
         )}
         <div className="text-center">
           <div className="text-6xl mb-4">
-            {isValid ? "✅" : "❌"}
+            {isValid ? <MdCheckCircle size={96} className="text-green-500 mx-auto" /> : <MdCancel size={96} className="text-red-500 mx-auto" />}
           </div>
           
           <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -81,8 +100,8 @@ function QuestionSummary({
           
           {isValid ? (
             <div className="mb-6">
-              <p className="text-lg text-green-600 font-semibold mb-2">
-                Circuit is valid! 🎉
+              <p className="text-lg text-green-600 font-semibold mb-2 flex items-center justify-center gap-2">
+                Circuit is valid! <IoSparkles className="text-yellow-500" />
               </p>
               <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
                 You earned <span className="font-bold text-blue-600">{score}</span> points!
@@ -125,7 +144,9 @@ function QuestionSummary({
             onClick={onNextQuestion}
             className="w-full py-3 px-6 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors"
           >
-            Continue to Next Question →
+            <span className="flex items-center justify-center gap-2">
+              Continue to Next Question <MdArrowForward />
+            </span>
           </button>
         </div>
       </div>
@@ -151,10 +172,26 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
   const averageScore = questionsAnswered > 0 ? Math.round(score / questionsAnswered) : 0;
 
   const getPerformanceMessage = () => {
-    if (accuracy >= 90) return "🏆 Excellent work! You're a circuit master!";
-    if (accuracy >= 75) return "🎯 Great job! You have a solid understanding of circuits.";
-    if (accuracy >= 60) return "👍 Good effort! Keep practicing to improve.";
-    return "💪 Keep learning! Practice makes perfect.";
+    if (accuracy >= 90) return (
+      <span className="flex items-center justify-center gap-2">
+        <FaTrophy className="text-yellow-500" /> Excellent work! You're a circuit master!
+      </span>
+    );
+    if (accuracy >= 75) return (
+      <span className="flex items-center justify-center gap-2">
+        <FaBullseye className="text-blue-500" /> Great job! You have a solid understanding of circuits.
+      </span>
+    );
+    if (accuracy >= 60) return (
+      <span className="flex items-center justify-center gap-2">
+        <FaThumbsUp className="text-green-500" /> Good effort! Keep practicing to improve.
+      </span>
+    );
+    return (
+      <span className="flex items-center justify-center gap-2">
+        <FaDumbbell className="text-purple-500" /> Keep learning! Practice makes perfect.
+      </span>
+    );
   };
 
   const getDifficultyColor = (diff: "easy" | "medium" | "hard") => {
@@ -179,11 +216,13 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
             }`}
             title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
-            {isDarkMode ? '☀️' : '🌙'}
+            {isDarkMode ? <MdLightMode size={20} /> : <MdDarkMode size={20} />}
           </button>
         )}
         <div className="text-center">
-          <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-2`}>🎉 Game Complete!</h2>
+          <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-2 flex items-center justify-center gap-2`}>
+            <IoSparkles className="text-yellow-500" /> Game Complete!
+          </h2>
           <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-6`}>You've completed all {totalQuestions} {difficulty} circuit challenges!</p>
           
           <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-6 mb-6`}>
@@ -214,7 +253,9 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
               onClick={onRestart}
               className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-colors ${getDifficultyColor(difficulty)}`}
             >
-              🔄 Play {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Again
+              <span className="flex items-center justify-center gap-2">
+                <MdRefresh /> Play {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Again
+              </span>
             </button>
             
             <div className="flex gap-2">
@@ -233,7 +274,9 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
               onClick={onBackToMenu}
               className="w-full py-2 px-4 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-medium transition-colors"
             >
-              🏠 Back to Menu
+              <span className="flex items-center justify-center gap-2">
+                <MdHome /> Back to Menu
+              </span>
             </button>
           </div>
         </div>
@@ -268,9 +311,9 @@ function DifficultyMenu({ onStartGame, theme, isDarkMode = false, onToggleDarkMo
 
   const getDifficultyIcon = (diff: "easy" | "medium" | "hard") => {
     switch (diff) {
-      case 'easy': return '🌱';
-      case 'medium': return '⚡';
-      case 'hard': return '🔥';
+      case 'easy': return <FaSeedling className="text-green-600" size={48} />;
+      case 'medium': return <FaBolt className="text-yellow-600" size={48} />;
+      case 'hard': return <FaFire className="text-red-600" size={48} />;
     }
   };
 
@@ -288,12 +331,14 @@ function DifficultyMenu({ onStartGame, theme, isDarkMode = false, onToggleDarkMo
             }`}
             title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           >
-            {isDarkMode ? '☀️' : '🌙'}
+            {isDarkMode ? <MdLightMode size={20} /> : <MdDarkMode size={20} />}
           </button>
         )}
         
         <div className="text-center mb-8">
-          <h1 className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-2`}>🔌 Circuit Challenge</h1>
+          <h1 className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-2 flex items-center justify-center gap-2`}>
+            <FaBolt className="text-yellow-500" /> Circuit Challenge
+          </h1>
           <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-lg`}>Choose your difficulty level to begin the circuit building challenge!</p>
         </div>
         
