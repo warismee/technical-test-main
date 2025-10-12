@@ -117,7 +117,30 @@ const getComponentsFromTemplate = (template: CircuitTemplate): Component[] => {
         <circle cx="38" cy="10" r="1.5" fill="#333333" />
       </svg>
     ) },
-    { id: "T", type: "T", label: "Transistor", symbol: (
+    { id: "S", type: "S", label: "Switch", symbol: (
+      <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
+        <line x1="2" y1="10" x2="12" y2="10" stroke="#333333" strokeWidth="2" />
+        <line x1="12" y1="10" x2="28" y2="6" stroke="#333333" strokeWidth="2" />
+        <line x1="28" y1="10" x2="38" y2="10" stroke="#333333" strokeWidth="2" />
+        <circle cx="12" cy="10" r="1.5" fill="#333333" />
+        <circle cx="28" cy="10" r="1.5" fill="#333333" />
+        <circle cx="2" cy="10" r="1.5" fill="#333333" />
+        <circle cx="38" cy="10" r="1.5" fill="#333333" />
+      </svg>
+    ) },
+    { id: "LED", type: "LED", label: "LED", symbol: (
+      <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
+        <line x1="2" y1="10" x2="16" y2="10" stroke="#333333" strokeWidth="2" />
+        <polygon points="16,6 16,14 24,10" fill="#ff4444" />
+        <line x1="24" y1="6" x2="24" y2="14" stroke="#333333" strokeWidth="2" />
+        <line x1="24" y1="10" x2="38" y2="10" stroke="#333333" strokeWidth="2" />
+        <line x1="26" y1="4" x2="30" y2="2" stroke="#ffaa00" strokeWidth="1.5" />
+        <line x1="26" y1="16" x2="30" y2="18" stroke="#ffaa00" strokeWidth="1.5" />
+        <circle cx="2" cy="10" r="1.5" fill="#333333" />
+        <circle cx="38" cy="10" r="1.5" fill="#333333" />
+      </svg>
+    ) },
+    { id: "Q", type: "Q", label: "Transistor", symbol: (
       <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
         <line x1="2" y1="10" x2="12" y2="10" stroke="#333333" strokeWidth="2" />
         <line x1="12" y1="6" x2="12" y2="14" stroke="#333333" strokeWidth="3" />
@@ -127,6 +150,41 @@ const getComponentsFromTemplate = (template: CircuitTemplate): Component[] => {
         <line x1="20" y1="16" x2="20" y2="18" stroke="#333333" strokeWidth="2" />
         <polygon points="18,15 20,16 19,17" fill="#333333" />
         <circle cx="2" cy="10" r="1.5" fill="#333333" />
+        <circle cx="20" cy="2" r="1.5" fill="#333333" />
+        <circle cx="20" cy="18" r="1.5" fill="#333333" />
+      </svg>
+    ) },
+    { id: "OP", type: "OP", label: "Op-Amp", symbol: (
+      <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
+        <polygon points="8,4 8,16 32,10" fill="none" stroke="#333333" strokeWidth="2" />
+        <line x1="2" y1="7" x2="8" y2="7" stroke="#333333" strokeWidth="2" />
+        <line x1="2" y1="13" x2="8" y2="13" stroke="#333333" strokeWidth="2" />
+        <line x1="32" y1="10" x2="38" y2="10" stroke="#333333" strokeWidth="2" />
+        <line x1="20" y1="4" x2="20" y2="2" stroke="#333333" strokeWidth="2" />
+        <line x1="20" y1="16" x2="20" y2="18" stroke="#333333" strokeWidth="2" />
+        <text x="12" y="8" fontSize="6" fill="#333333">+</text>
+        <text x="12" y="14" fontSize="6" fill="#333333">-</text>
+        <circle cx="2" cy="7" r="1.5" fill="#333333" />
+        <circle cx="2" cy="13" r="1.5" fill="#333333" />
+        <circle cx="38" cy="10" r="1.5" fill="#333333" />
+        <circle cx="20" cy="2" r="1.5" fill="#333333" />
+        <circle cx="20" cy="18" r="1.5" fill="#333333" />
+      </svg>
+    ) },
+    { id: "IC", type: "IC", label: "IC", symbol: (
+      <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
+        <rect x="8" y="4" width="24" height="12" fill="none" stroke="#333333" strokeWidth="2" />
+        <line x1="2" y1="7" x2="8" y2="7" stroke="#333333" strokeWidth="2" />
+        <line x1="2" y1="13" x2="8" y2="13" stroke="#333333" strokeWidth="2" />
+        <line x1="32" y1="7" x2="38" y2="7" stroke="#333333" strokeWidth="2" />
+        <line x1="32" y1="13" x2="38" y2="13" stroke="#333333" strokeWidth="2" />
+        <line x1="20" y1="4" x2="20" y2="2" stroke="#333333" strokeWidth="2" />
+        <line x1="20" y1="16" x2="20" y2="18" stroke="#333333" strokeWidth="2" />
+        <text x="20" y="12" fontSize="8" fill="#333333" textAnchor="middle">IC</text>
+        <circle cx="2" cy="7" r="1.5" fill="#333333" />
+        <circle cx="2" cy="13" r="1.5" fill="#333333" />
+        <circle cx="38" cy="7" r="1.5" fill="#333333" />
+        <circle cx="38" cy="13" r="1.5" fill="#333333" />
         <circle cx="20" cy="2" r="1.5" fill="#333333" />
         <circle cx="20" cy="18" r="1.5" fill="#333333" />
       </svg>
@@ -225,9 +283,9 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
 
       <div className={`absolute top-4 right-4 transform ${sidebarBg} p-4 rounded-lg shadow-lg pointer-events-auto`}>
         <h3 className={`text-sm font-bold ${textColor} mb-2`}>Components</h3>
-        <div className={`text-xs ${textColor} opacity-75 mb-2`}>
+        {/* <div className={`text-xs ${textColor} opacity-75 mb-2`}>
           Required: {currentTemplate.requiredComponents.map(comp => `${comp.count}×${comp.type}`).join(', ')}
-        </div>
+        </div> */}
         <p className={`text-xs ${textColor} opacity-75 mb-3`}>
           {selectedFromParent ? 'Now click on a blank slot in the circuit' : 'Select a component, then click on a blank slot'}
         </p>

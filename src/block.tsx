@@ -103,7 +103,7 @@ export const Block: React.FC<BlockProps> = ({
       };
     });
 
-    // For now, we'll use empty connections array since wire connections aren't implemented yet
+    // Skip connection validation - only check component placement
     const connections: Array<{ from: string; to: string }> = [];
     
     const result = validateCircuit(placedComponentsArray, connections, currentTemplate);

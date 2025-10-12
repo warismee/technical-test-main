@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { SchematicResistor, SchematicCapacitor, SchematicInductor, SchematicWire, SchematicTerminal } from "./CircuitSchematic2D";
+import { SchematicResistor, SchematicCapacitor, SchematicInductor, SchematicWire, SchematicTerminal, SchematicTransistor, SchematicLED, SchematicDiode, SchematicSwitch, SchematicOpAmp, SchematicIC } from "./CircuitSchematic2D";
 import { Text } from "@react-three/drei";
 import { CircuitTemplate } from "./circuitLogic";
 import * as THREE from "three";
@@ -20,13 +20,15 @@ function BlankComponentSlot({
   nodeId,
   onSlotClick,
   isClicked = false,
-  hasSelectedComponent = false
+  hasSelectedComponent = false,
+  selectedComponentType = null
 }: { 
   position: [number, number, number]; 
   nodeId: string;
   onSlotClick: (nodeId: string) => void;
   isClicked?: boolean;
   hasSelectedComponent?: boolean;
+  selectedComponentType?: string | null;
 }) {
   const [hovered, setHovered] = useState(false);
 
@@ -35,7 +37,7 @@ function BlankComponentSlot({
       position={position}
       scale={hovered ? 1.02 : 1}
     >
-      {/* Clickable area */}
+      {/* Clickable area - adjust size based on component type */}
       <mesh
         onClick={(e) => {
           e.stopPropagation();
@@ -44,7 +46,7 @@ function BlankComponentSlot({
         onPointerEnter={() => setHovered(true)}
         onPointerLeave={() => setHovered(false)}
       >
-        <boxGeometry args={[2.0, 0.7, 0.1]} />
+        <boxGeometry args={nodeId === 'Q1' ? [2.6, 2.4, 0.1] : [2.2, 0.8, 0.1]} />
         <meshBasicMaterial 
           color={isClicked ? "#bbdefb" : hovered ? "#e0f2fe" : "#f5f5f5"} 
           transparent 
@@ -54,7 +56,7 @@ function BlankComponentSlot({
       
       {/* Dashed border to indicate it's a placeholder */}
       <lineSegments>
-        <edgesGeometry attach="geometry" args={[new THREE.BoxGeometry(2.0, 0.7, 0.1)]} />
+        <edgesGeometry attach="geometry" args={[new THREE.BoxGeometry(nodeId === 'Q1' ? 2.6 : 2.2, nodeId === 'Q1' ? 2.4 : 0.8, 0.1)]} />
         <lineDashedMaterial 
           attach="material" 
           color={isClicked ? "#1976d2" : hovered ? "#0288d1" : "#999999"} 
@@ -63,15 +65,36 @@ function BlankComponentSlot({
         />
       </lineSegments>
       
-      {/* Connection points */}
-      <mesh position={[-1, 0, 0]}>
-        <circleGeometry args={[0.05, 8]} />
-        <meshBasicMaterial color="#999999" />
-      </mesh>
-      <mesh position={[1, 0, 0]}>
-        <circleGeometry args={[0.05, 8]} />
-        <meshBasicMaterial color="#999999" />
-      </mesh>
+      {/* Connection points - show appropriate points based on selected component */}
+      {nodeId === 'Q1' || selectedComponentType === 'transistor' ? (
+        <>
+          {/* Transistor connection points: base (left), collector (top), emitter (bottom) */}
+          <mesh position={[-1, 0, 0]}>
+            <circleGeometry args={[0.06, 8]} />
+            <meshBasicMaterial color="#444444" />
+          </mesh>
+          <mesh position={[0.3, 1, 0]}>
+            <circleGeometry args={[0.06, 8]} />
+            <meshBasicMaterial color="#444444" />
+          </mesh>
+          <mesh position={[0.3, -1, 0]}>
+            <circleGeometry args={[0.06, 8]} />
+            <meshBasicMaterial color="#444444" />
+          </mesh>
+        </>
+      ) : (
+        <>
+          {/* Standard two-terminal connection points */}
+          <mesh position={[-1, 0, 0]}>
+            <circleGeometry args={[0.05, 8]} />
+            <meshBasicMaterial color="#666666" />
+          </mesh>
+          <mesh position={[1, 0, 0]}>
+            <circleGeometry args={[0.05, 8]} />
+            <meshBasicMaterial color="#666666" />
+          </mesh>
+        </>
+      )}
       
       {/* Placeholder text */}
       <Text
@@ -165,6 +188,8 @@ export default function CircuitSchematic2D({
         const x3d = (node.position.x - 250) / 40; // Further increased spacing by reducing divisor to 40
         const y3d = (250 - node.position.y) / 40; // Further increased spacing by reducing divisor to 40
         const position: [number, number, number] = [x3d, y3d, 0];
+        
+
 
         if (node.type === 'terminal') {
           return (
@@ -185,7 +210,13 @@ export default function CircuitSchematic2D({
             const componentMap: { [key: string]: string } = {
               'R': 'resistor',
               'L': 'inductor', 
-              'C': 'capacitor'
+              'C': 'capacitor',
+              'LED': 'led',
+              'D': 'diode',
+              'S': 'switch',
+              'Q': 'transistor',
+              'OP': 'opamp',
+              'IC': 'ic'
             };
             
             const componentType = componentMap[placedComponentType] || 'resistor';
@@ -220,6 +251,66 @@ export default function CircuitSchematic2D({
                   />
                 </group>
               );
+            } else if (componentType === 'led') {
+              return (
+                <group key={node.id} onClick={() => handleComponentClick(node.id, 'led')}>
+                  <SchematicLED
+                    type="led"
+                    position={position}
+                    label={node.id}
+                  />
+                </group>
+              );
+            } else if (componentType === 'transistor') {
+              return (
+                <group key={node.id} onClick={() => handleComponentClick(node.id, 'transistor')}>
+                  <SchematicTransistor
+                    type="transistor"
+                    position={position}
+                    label={node.id}
+                  />
+                </group>
+              );
+            } else if (componentType === 'diode') {
+              return (
+                <group key={node.id} onClick={() => handleComponentClick(node.id, 'diode')}>
+                  <SchematicDiode
+                    type="diode"
+                    position={position}
+                    label={node.id}
+                  />
+                </group>
+              );
+            } else if (componentType === 'switch') {
+              return (
+                <group key={node.id} onClick={() => handleComponentClick(node.id, 'switch')}>
+                  <SchematicSwitch
+                    type="switch"
+                    position={position}
+                    label={node.id}
+                  />
+                </group>
+              );
+            } else if (componentType === 'opamp') {
+              return (
+                <group key={node.id} onClick={() => handleComponentClick(node.id, 'opamp')}>
+                  <SchematicOpAmp
+                    type="opamp"
+                    position={position}
+                    label={node.id}
+                  />
+                </group>
+              );
+            } else if (componentType === 'ic') {
+              return (
+                <group key={node.id} onClick={() => handleComponentClick(node.id, 'ic')}>
+                  <SchematicIC
+                    type="ic"
+                    position={position}
+                    label={node.id}
+                  />
+                </group>
+              );
             }
           } else {
             // Show blank slot for user to place component
@@ -231,6 +322,7 @@ export default function CircuitSchematic2D({
                 onSlotClick={handleSlotClick}
                 isClicked={clickedSlots[node.id] || false}
                 hasSelectedComponent={!!selectedComponentFromUI}
+                selectedComponentType={selectedComponentFromUI}
               />
             );
           }
@@ -255,10 +347,55 @@ export default function CircuitSchematic2D({
           // Calculate exact connection points based on component type and position
           let fromConnectionX: number, fromConnectionY: number, toConnectionX: number, toConnectionY: number;
           
-          // For components, connect to the left (-1) or right (+1) edge based on relative position
+          // Helper function to get transistor connection point
+          const getTransistorConnectionPoint = (nodePos: {x: number, y: number}, connectedNodeId: string, connections: string[]) => {
+            const nodeX = (nodePos.x - 250) / 40;
+            const nodeY = (250 - nodePos.y) / 40;
+            
+            // Find the index of the connected node in the connections array
+            const connectionIndex = connections.indexOf(connectedNodeId);
+            
+            // For the transistor switch circuit: Q1 connections are ['Q1_C', 'GND', 'R2']
+            // Map these to the actual transistor pin positions:
+            // Q1_C (collector junction) -> collector (top): +0.3, +1
+            // GND (ground) -> emitter (bottom): +0.3, -1  
+            // R2 (base signal) -> base (left): -1, 0
+            
+            if (connectedNodeId === 'Q1_C') {
+              // Collector connection (top)
+              return { x: nodeX + 0.3, y: nodeY + 1 };
+            } else if (connectedNodeId === 'GND') {
+              // Emitter connection (bottom)
+              return { x: nodeX + 0.3, y: nodeY - 1 };
+            } else if (connectedNodeId === 'R2') {
+              // Base connection (left)
+              return { x: nodeX - 1, y: nodeY };
+            } else {
+              // Fallback to index-based positioning
+              if (connectionIndex === 0) {
+                return { x: nodeX + 0.3, y: nodeY + 1 };
+              } else if (connectionIndex === 1) {
+                return { x: nodeX + 0.3, y: nodeY - 1 };
+              } else {
+                return { x: nodeX - 1, y: nodeY };
+              }
+            }
+          };
+          
+          // For components, determine connection points
           if (node.type === 'component') {
-            fromConnectionX = nodeX + (connectedX > nodeX ? 1 : -1);
-            fromConnectionY = nodeY;
+            // Check if this is a transistor by looking at placed components
+            const nodeComponentType = placedComponents[node.id];
+            
+            if (nodeComponentType === 'transistor') {
+              const connectionPoint = getTransistorConnectionPoint(node.position, connectedId, node.connections);
+              fromConnectionX = connectionPoint.x;
+              fromConnectionY = connectionPoint.y;
+            } else {
+              // Regular component - connect to the left (-1) or right (+1) edge based on relative position
+              fromConnectionX = nodeX + (connectedX > nodeX ? 1 : -1);
+              fromConnectionY = nodeY;
+            }
           } else {
             // Terminals connect from center
             fromConnectionX = nodeX;
@@ -266,8 +403,17 @@ export default function CircuitSchematic2D({
           }
           
           if (connectedNode.type === 'component') {
-            toConnectionX = connectedX + (nodeX > connectedX ? 1 : -1);
-            toConnectionY = connectedY;
+            // Check if connected node is a transistor
+            const connectedComponentType = placedComponents[connectedNode.id];
+            if (connectedComponentType === 'transistor') {
+              const connectionPoint = getTransistorConnectionPoint(connectedNode.position, node.id, connectedNode.connections);
+              toConnectionX = connectionPoint.x;
+              toConnectionY = connectionPoint.y;
+            } else {
+              // Regular component - connect to the left (-1) or right (+1) edge based on relative position  
+              toConnectionX = connectedX + (nodeX > connectedX ? 1 : -1);
+              toConnectionY = connectedY;
+            }
           } else {
             // Terminals connect to center
             toConnectionX = connectedX;
