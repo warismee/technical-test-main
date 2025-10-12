@@ -1,7 +1,6 @@
 import React, { Suspense, useState, useMemo, useEffect } from "react";
 import { Html } from "@react-three/drei";
 import { CircuitUIOverlay } from "./CircuitUIOverlay";
-import ThreeCircuit from "./ThreeCircuit";
 import CircuitSchematic2DScene from "./CircuitSchematic2DScene";
 import { circuitTemplates, generateRandomChallenge, validateCircuit } from "./circuitLogic";
 
@@ -138,8 +137,6 @@ export const Block: React.FC<BlockProps> = ({
     switch(mode) {
       case '2d-schematic':
         return 'Traditional circuit diagram view with draggable symbols and UI overlay';
-      case '3d-realistic':
-        return 'Detailed 3D circuit visualization';
       default:
         return '';
     }
@@ -173,113 +170,13 @@ export const Block: React.FC<BlockProps> = ({
             />
           </>
         );
-
-      case "3d-realistic":
-      default:
-        return <ThreeCircuit />;
     }
   };
 
   return (
     <div className="relative w-full h-full" style={{ backgroundColor }}>
       {/* Render the current view */}
-      {renderCurrentView()}
-
-      {/* Mode Selection Controls
-      {showControls && (
-        <div className="absolute top-5 left-5 z-50" 
-             style={{
-               background: 'rgba(255, 255, 255, 0.9)',
-               padding: '15px',
-               borderRadius: '8px',
-               boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-               fontFamily: 'Arial, sans-serif'
-             }}>
-          <h3 style={{ 
-            margin: '0 0 10px 0', 
-            fontSize: '16px', 
-            fontWeight: 'bold',
-            color: '#333'
-          }}>
-            Circuit Visualization Demo
-          </h3>
-          
-          <button
-            onClick={() => setCurrentViewMode('2d-schematic')}
-            style={{
-              display: 'block',
-              width: '200px',
-              margin: '5px 0',
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '4px',
-              background: currentViewMode === '2d-schematic' ? '#28a745' : '#007acc',
-              color: 'white',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-            onMouseOver={(e) => {
-              if (currentViewMode !== '2d-schematic') {
-                e.currentTarget.style.background = '#005a9e';
-              }
-            }}
-            onMouseOut={(e) => {
-              if (currentViewMode !== '2d-schematic') {
-                e.currentTarget.style.background = '#007acc';
-              }
-            }}
-          >
-            2D Schematic View
-          </button>
-
-          <button
-            onClick={() => setCurrentViewMode('3d-realistic')}
-            style={{
-              display: 'block',
-              width: '200px',
-              margin: '5px 0',
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '4px',
-              background: currentViewMode === '3d-realistic' ? '#28a745' : '#007acc',
-              color: 'white',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-            onMouseOver={(e) => {
-              if (currentViewMode !== '3d-realistic') {
-                e.currentTarget.style.background = '#005a9e';
-              }
-            }}
-            onMouseOut={(e) => {
-              if (currentViewMode !== '3d-realistic') {
-                e.currentTarget.style.background = '#007acc';
-              }
-            }}
-          >
-            3D Realistic Circuit
-          </button>
-
-          <p style={{ 
-            fontSize: '12px', 
-            margin: '8px 0 5px 0', 
-            color: '#666' 
-          }}>
-            <small>Switch between different visualization modes</small>
-          </p>
-
-          <div style={{
-            marginTop: '10px',
-            padding: '8px',
-            background: 'rgba(0, 120, 204, 0.1)',
-            borderRadius: '4px',
-            fontSize: '12px',
-            color: '#007acc'
-          }}>
-            <strong>{currentViewMode.charAt(0).toUpperCase() + currentViewMode.slice(1).replace('-', ' ')}:</strong> {getModeInfo(currentViewMode)}
-          </div>
-        </div>
-      )} */}
+      {renderCurrentView()}      
     </div>
   );
 };
