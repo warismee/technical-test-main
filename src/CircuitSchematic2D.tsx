@@ -6,9 +6,10 @@ interface SchematicComponentProps {
   position: [number, number, number];
   type: 'resistor' | 'capacitor' | 'inductor' | 'switch' | 'led' | 'transistor' | 'diode' | 'opamp' | 'ic';
   label?: string;
+  isDarkMode?: boolean;
 }
 
-function SchematicResistor({ position, label }: SchematicComponentProps) {
+function SchematicResistor({ position, label, isDarkMode = false }: SchematicComponentProps) {
   // Create zigzag pattern for resistor
   const zigzagPoints = [
     new THREE.Vector3(-1, 0, 0),
@@ -27,18 +28,18 @@ function SchematicResistor({ position, label }: SchematicComponentProps) {
       {/* Zigzag resistor symbol */}
       <Line
         points={zigzagPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={3}
       />
       
       {/* Connection points */}
       <mesh position={[-1, 0, 0]}>
         <circleGeometry args={[0.05, 8]} />
-        <meshBasicMaterial color="#666666" />
+        <meshBasicMaterial color={isDarkMode ? "#ffffff" : "#666666"} />
       </mesh>
       <mesh position={[1, 0, 0]}>
         <circleGeometry args={[0.05, 8]} />
-        <meshBasicMaterial color="#666666" />
+        <meshBasicMaterial color={isDarkMode ? "#ffffff" : "#666666"} />
       </mesh>
       
       {/* Label */}
@@ -46,7 +47,7 @@ function SchematicResistor({ position, label }: SchematicComponentProps) {
         <Text
           position={[0, -0.5, 0]}
           fontSize={0.2}
-          color="#333333"
+          color={isDarkMode ? "#ffffff" : "#333333"}
           anchorX="center"
           anchorY="middle"
         >
@@ -57,7 +58,7 @@ function SchematicResistor({ position, label }: SchematicComponentProps) {
   );
 }
 
-function SchematicCapacitor({ position, label }: SchematicComponentProps) {
+function SchematicCapacitor({ position, label, isDarkMode = false }: SchematicComponentProps) {
   // Create parallel lines for capacitor
   const leftPlatePoints = [
     new THREE.Vector3(-0.1, -0.4, 0),
@@ -84,37 +85,37 @@ function SchematicCapacitor({ position, label }: SchematicComponentProps) {
       {/* Left plate */}
       <Line
         points={leftPlatePoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={4}
       />
       
       {/* Right plate */}
       <Line
         points={rightPlatePoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={4}
       />
       
       {/* Connection lines */}
       <Line
         points={leftConnectionPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={2}
       />
       <Line
         points={rightConnectionPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={2}
       />
       
       {/* Connection points */}
       <mesh position={[-1, 0, 0]}>
         <circleGeometry args={[0.05, 8]} />
-        <meshBasicMaterial color="#666666" />
+        <meshBasicMaterial color={isDarkMode ? "#ffffff" : "#666666"} />
       </mesh>
       <mesh position={[1, 0, 0]}>
         <circleGeometry args={[0.05, 8]} />
-        <meshBasicMaterial color="#666666" />
+        <meshBasicMaterial color={isDarkMode ? "#ffffff" : "#666666"} />
       </mesh>
       
       {/* Label */}
@@ -122,7 +123,7 @@ function SchematicCapacitor({ position, label }: SchematicComponentProps) {
         <Text
           position={[0, -0.7, 0]}
           fontSize={0.2}
-          color="#333333"
+          color={isDarkMode ? "#ffffff" : "#333333"}
           anchorX="center"
           anchorY="middle"
         >
@@ -133,7 +134,7 @@ function SchematicCapacitor({ position, label }: SchematicComponentProps) {
   );
 }
 
-function SchematicInductor({ position, label }: SchematicComponentProps) {
+function SchematicInductor({ position, label, isDarkMode = false }: SchematicComponentProps) {
   // Create coil curves for inductor
   const coilPoints = [];
   const numCoils = 4;
@@ -159,30 +160,30 @@ function SchematicInductor({ position, label }: SchematicComponentProps) {
       {/* Coil symbol */}
       <Line
         points={coilPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={3}
       />
       
       {/* Connection lines */}
       <Line
         points={leftConnectionPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={2}
       />
       <Line
         points={rightConnectionPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={2}
       />
       
       {/* Connection points */}
       <mesh position={[-1, 0, 0]}>
         <circleGeometry args={[0.05, 8]} />
-        <meshBasicMaterial color="#666666" />
+        <meshBasicMaterial color={isDarkMode ? "#ffffff" : "#666666"} />
       </mesh>
       <mesh position={[1, 0, 0]}>
         <circleGeometry args={[0.05, 8]} />
-        <meshBasicMaterial color="#666666" />
+        <meshBasicMaterial color={isDarkMode ? "#ffffff" : "#666666"} />
       </mesh>
       
       {/* Label */}
@@ -190,7 +191,7 @@ function SchematicInductor({ position, label }: SchematicComponentProps) {
         <Text
           position={[0, -0.5, 0]}
           fontSize={0.2}
-          color="#333333"
+          color={isDarkMode ? "#ffffff" : "#333333"}
           anchorX="center"
           anchorY="middle"
         >
@@ -201,18 +202,18 @@ function SchematicInductor({ position, label }: SchematicComponentProps) {
   );
 }
 
-function SchematicWire({ from, to }: { from: [number, number, number]; to: [number, number, number] }) {
+function SchematicWire({ from, to, isDarkMode = false }: { from: [number, number, number]; to: [number, number, number]; isDarkMode?: boolean }) {
   const points = [new THREE.Vector3(...from), new THREE.Vector3(...to)];
   return (
     <Line
       points={points}
-      color="#333333"
+      color={isDarkMode ? "#ffffff" : "#333333"}
       lineWidth={2}
     />
   );
 }
 
-function SchematicSwitch({ position, label }: SchematicComponentProps) {
+function SchematicSwitch({ position, label, isDarkMode = false }: SchematicComponentProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleClick = () => {
@@ -248,19 +249,19 @@ function SchematicSwitch({ position, label }: SchematicComponentProps) {
       {/* Connection lines */}
       <Line
         points={leftContactPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={2}
       />
       <Line
         points={rightContactPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={2}
       />
       
       {/* Switch blade */}
       <Line
         points={bladePoints}
-        color={isOpen ? "#ff8888" : "#333333"}
+        color={isOpen ? "#ff8888" : isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={3}
       />
       
@@ -300,7 +301,7 @@ function SchematicSwitch({ position, label }: SchematicComponentProps) {
   );
 }
 
-function SchematicLED({ position, label }: SchematicComponentProps) {
+function SchematicLED({ position, label, isDarkMode = false }: SchematicComponentProps) {
 
   // LED diode triangle
   const trianglePoints = [
@@ -350,19 +351,19 @@ function SchematicLED({ position, label }: SchematicComponentProps) {
       {/* LED cathode line */}
       <Line
         points={cathodePoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={3}
       />
       
       {/* Connection lines */}
       <Line
         points={leftConnectionPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={2}
       />
       <Line
         points={rightConnectionPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={2}
       />
       
@@ -404,7 +405,7 @@ function SchematicLED({ position, label }: SchematicComponentProps) {
   );
 }
 
-function SchematicTransistor({ position, label }: SchematicComponentProps) {
+function SchematicTransistor({ position, label, isDarkMode = false }: SchematicComponentProps) {
 
   // Base line (vertical)
   const basePoints = [
@@ -453,45 +454,45 @@ function SchematicTransistor({ position, label }: SchematicComponentProps) {
       {/* Base line */}
       <Line
         points={basePoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={4}
       />
       
       {/* Collector line */}
       <Line
         points={collectorPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={3}
       />
       
       {/* Emitter line */}
       <Line
         points={emitterPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={3}
       />
       
       {/* Arrow on emitter */}
       <Line
         points={arrowPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={2}
       />
       
       {/* Connection lines */}
       <Line
         points={baseConnectionPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={2}
       />
       <Line
         points={collectorConnectionPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={2}
       />
       <Line
         points={emitterConnectionPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={2}
       />
       
@@ -525,7 +526,7 @@ function SchematicTransistor({ position, label }: SchematicComponentProps) {
   );
 }
 
-function SchematicDiode({ position, label }: SchematicComponentProps) {
+function SchematicDiode({ position, label, isDarkMode = false }: SchematicComponentProps) {
 
   // Diode triangle (anode)
   const trianglePoints = [
@@ -557,26 +558,26 @@ function SchematicDiode({ position, label }: SchematicComponentProps) {
       {/* Diode triangle (anode) */}
       <Line
         points={trianglePoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={3}
       />
       
       {/* Diode cathode line */}
       <Line
         points={cathodePoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={3}
       />
       
       {/* Connection lines */}
       <Line
         points={leftConnectionPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={2}
       />
       <Line
         points={rightConnectionPoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={2}
       />
       
@@ -606,7 +607,7 @@ function SchematicDiode({ position, label }: SchematicComponentProps) {
   );
 }
 
-function SchematicOpAmp({ position, label }: SchematicComponentProps) {
+function SchematicOpAmp({ position, label, isDarkMode = false }: SchematicComponentProps) {
 
   // Op-amp triangle
   const trianglePoints = [
@@ -647,17 +648,17 @@ function SchematicOpAmp({ position, label }: SchematicComponentProps) {
       {/* Op-amp triangle */}
       <Line
         points={trianglePoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={3}
       />
       
       {/* Connection lines */}
-      <Line points={positiveInputPoints} color="#333333" lineWidth={2} />
-      <Line points={negativeInputPoints} color="#333333" lineWidth={2} />
-      <Line points={outputPoints} color="#333333" lineWidth={2} />
-      <Line points={vccPoints} color="#333333" lineWidth={2} />
-      <Line points={gndPoints} color="#333333" lineWidth={2} />
-      
+      <Line points={positiveInputPoints} color={isDarkMode ? "#ffffff" : "#333333"} lineWidth={2} />
+      <Line points={negativeInputPoints} color={isDarkMode ? "#ffffff" : "#333333"} lineWidth={2} />
+      <Line points={outputPoints} color={isDarkMode ? "#ffffff" : "#333333"} lineWidth={2} />
+      <Line points={vccPoints} color={isDarkMode ? "#ffffff" : "#333333"} lineWidth={2} />
+      <Line points={gndPoints} color={isDarkMode ? "#ffffff" : "#333333"} lineWidth={2} />
+
       {/* + and - symbols */}
       <Text
         position={[-0.3, 0.15, 0]}
@@ -716,7 +717,7 @@ function SchematicOpAmp({ position, label }: SchematicComponentProps) {
   );
 }
 
-function SchematicIC({ position, label }: SchematicComponentProps) {
+function SchematicIC({ position, label, isDarkMode = false }: SchematicComponentProps) {
 
   // IC package outline
   const packagePoints = [
@@ -740,17 +741,17 @@ function SchematicIC({ position, label }: SchematicComponentProps) {
       {/* IC package */}
       <Line
         points={packagePoints}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         lineWidth={3}
       />
       
       {/* Pin connection lines */}
-      <Line points={pin1Points} color="#333333" lineWidth={2} />
-      <Line points={pin2Points} color="#333333" lineWidth={2} />
-      <Line points={pin3Points} color="#333333" lineWidth={2} />
-      <Line points={pin4Points} color="#333333" lineWidth={2} />
-      <Line points={vccPoints} color="#333333" lineWidth={2} />
-      <Line points={gndPoints} color="#333333" lineWidth={2} />
+      <Line points={pin1Points} color={isDarkMode ? "#ffffff" : "#333333"} lineWidth={2} />
+      <Line points={pin2Points} color={isDarkMode ? "#ffffff" : "#333333"} lineWidth={2} />
+      <Line points={pin3Points} color={isDarkMode ? "#ffffff" : "#333333"} lineWidth={2} />
+      <Line points={pin4Points} color={isDarkMode ? "#ffffff" : "#333333"} lineWidth={2} />
+      <Line points={vccPoints} color={isDarkMode ? "#ffffff" : "#333333"} lineWidth={2} />
+      <Line points={gndPoints} color={isDarkMode ? "#ffffff" : "#333333"} lineWidth={2} />
       
       {/* IC identifier */}
       <Text
@@ -805,19 +806,19 @@ function SchematicIC({ position, label }: SchematicComponentProps) {
   );
 }
 
-function SchematicJunction({ position }: { position: [number, number, number] }) {
+function SchematicJunction({ position, isDarkMode = false }: { position: [number, number, number]; isDarkMode?: boolean }) {
   return (
     <group position={position}>
       {/* Junction connection point */}
       <mesh>
         <circleGeometry args={[0.08, 16]} />
-        <meshBasicMaterial color="#333333" />
+        <meshBasicMaterial color={isDarkMode ? "#ffffff" : "#333333"} />
       </mesh>
     </group>
   );
 }
 
-function SchematicTerminal({ position, label }: { position: [number, number, number]; label: string }) {
+function SchematicTerminal({ position, label, isDarkMode = false }: { position: [number, number, number]; label: string; isDarkMode?: boolean }) {
   return (
     <group position={position}>
       {/* Terminal connection point */}
@@ -829,7 +830,7 @@ function SchematicTerminal({ position, label }: { position: [number, number, num
       <Text
         position={[0, -0.4, 0]}
         fontSize={0.2}
-        color="#333333"
+        color={isDarkMode ? "#ffffff" : "#333333"}
         anchorX="center"
         anchorY="middle"
       >

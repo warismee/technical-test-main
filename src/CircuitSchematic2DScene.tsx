@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { SchematicResistor, SchematicCapacitor, SchematicInductor, SchematicWire, SchematicTerminal, SchematicTransistor, SchematicLED, SchematicDiode, SchematicSwitch, SchematicOpAmp, SchematicIC } from "./CircuitSchematic2D";
+import { SchematicResistor, SchematicCapacitor, SchematicInductor, SchematicWire, SchematicTerminal, SchematicTransistor, SchematicLED, SchematicDiode, SchematicSwitch, SchematicOpAmp, SchematicIC, SchematicJunction } from "./CircuitSchematic2D";
 import { Text } from "@react-three/drei";
 import { CircuitTemplate } from "./circuitLogic";
 import * as THREE from "three";
@@ -12,6 +12,7 @@ interface CircuitSchematic2DProps {
   onComponentPlaced?: (nodeId: string, componentType: string) => void; // Callback when component is placed
   placedComponents?: {[nodeId: string]: string}; // Components placed from parent
   onComponentRemoved?: (nodeId: string) => void; // Callback when component is removed
+  isDarkMode?: boolean; // Dark mode flag for styling
 }
 
 // Blank component placeholder that users can click to select component type
@@ -21,7 +22,8 @@ function BlankComponentSlot({
   onSlotClick,
   isClicked = false,
   hasSelectedComponent = false,
-  selectedComponentType = null
+  selectedComponentType = null,
+  isDarkMode = false
 }: { 
   position: [number, number, number]; 
   nodeId: string;
@@ -29,6 +31,7 @@ function BlankComponentSlot({
   isClicked?: boolean;
   hasSelectedComponent?: boolean;
   selectedComponentType?: string | null;
+  isDarkMode?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
 
@@ -59,7 +62,7 @@ function BlankComponentSlot({
         <edgesGeometry attach="geometry" args={[new THREE.BoxGeometry(nodeId === 'Q1' ? 2.6 : 2.2, nodeId === 'Q1' ? 2.4 : 0.8, 0.1)]} />
         <lineDashedMaterial 
           attach="material" 
-          color={isClicked ? "#1976d2" : hovered ? "#0288d1" : "#999999"} 
+          color={isClicked ? "#1976d2" : hovered ? "#0288d1" : (isDarkMode ? "#ffffff" : "#999999")} 
           dashSize={0.1} 
           gapSize={0.05}
         />
@@ -71,15 +74,15 @@ function BlankComponentSlot({
           {/* Transistor connection points: base (left), collector (top), emitter (bottom) */}
           <mesh position={[-1, 0, 0]}>
             <circleGeometry args={[0.06, 8]} />
-            <meshBasicMaterial color="#444444" />
+            <meshBasicMaterial color={isDarkMode ? "#ffffff" : "#444444"} />
           </mesh>
           <mesh position={[0.3, 1, 0]}>
             <circleGeometry args={[0.06, 8]} />
-            <meshBasicMaterial color="#444444" />
+            <meshBasicMaterial color={isDarkMode ? "#ffffff" : "#444444"} />
           </mesh>
           <mesh position={[0.3, -1, 0]}>
             <circleGeometry args={[0.06, 8]} />
-            <meshBasicMaterial color="#444444" />
+            <meshBasicMaterial color={isDarkMode ? "#ffffff" : "#444444"} />
           </mesh>
         </>
       ) : (
@@ -87,11 +90,11 @@ function BlankComponentSlot({
           {/* Standard two-terminal connection points */}
           <mesh position={[-1, 0, 0]}>
             <circleGeometry args={[0.05, 8]} />
-            <meshBasicMaterial color="#666666" />
+            <meshBasicMaterial color={isDarkMode ? "#ffffff" : "#666666"} />
           </mesh>
           <mesh position={[1, 0, 0]}>
             <circleGeometry args={[0.05, 8]} />
-            <meshBasicMaterial color="#666666" />
+            <meshBasicMaterial color={isDarkMode ? "#ffffff" : "#666666"} />
           </mesh>
         </>
       )}
@@ -100,7 +103,7 @@ function BlankComponentSlot({
       <Text
         position={[0, 0, 0.01]}
         fontSize={0.15}
-        color={isClicked ? "#1976d2" : hovered ? "#0288d1" : "#666666"}
+        color={isClicked ? "#1976d2" : hovered ? "#0288d1" : (isDarkMode ? "#ffffff" : "#666666")}
         anchorX="center"
         anchorY="middle"
       >
@@ -116,7 +119,8 @@ export default function CircuitSchematic2D({
   selectedComponentFromUI, 
   onComponentPlaced,
   placedComponents = {},
-  onComponentRemoved
+  onComponentRemoved,
+  isDarkMode = false
 }: CircuitSchematic2DProps) {
   // State to track which slots have been clicked/selected
   const [clickedSlots, setClickedSlots] = useState<{[nodeId: string]: boolean}>({});
@@ -197,6 +201,17 @@ export default function CircuitSchematic2D({
               key={node.id}
               position={position}
               label={node.id}
+              isDarkMode={isDarkMode}
+            />
+          );
+        }
+        
+        if (node.type === 'junction') {
+          return (
+            <SchematicJunction 
+              key={node.id}
+              position={position}
+              isDarkMode={isDarkMode}
             />
           );
         }
@@ -227,6 +242,7 @@ export default function CircuitSchematic2D({
                   <SchematicResistor
                     type="resistor"
                     position={position}
+                    isDarkMode={isDarkMode}
                   />
                 </group>
               );
@@ -236,6 +252,7 @@ export default function CircuitSchematic2D({
                   <SchematicInductor
                     type="inductor"
                     position={position}
+                    isDarkMode={isDarkMode}
                   />
                 </group>
               );
@@ -245,6 +262,7 @@ export default function CircuitSchematic2D({
                   <SchematicCapacitor
                     type="capacitor"
                     position={position}
+                    isDarkMode={isDarkMode}
                   />
                 </group>
               );
@@ -254,6 +272,7 @@ export default function CircuitSchematic2D({
                   <SchematicLED
                     type="led"
                     position={position}
+                    isDarkMode={isDarkMode}
                   />
                 </group>
               );
@@ -263,6 +282,7 @@ export default function CircuitSchematic2D({
                   <SchematicTransistor
                     type="transistor"
                     position={position}
+                    isDarkMode={isDarkMode}
                   />
                 </group>
               );
@@ -272,6 +292,7 @@ export default function CircuitSchematic2D({
                   <SchematicDiode
                     type="diode"
                     position={position}
+                    isDarkMode={isDarkMode}
                   />
                 </group>
               );
@@ -281,6 +302,7 @@ export default function CircuitSchematic2D({
                   <SchematicSwitch
                     type="switch"
                     position={position}
+                    isDarkMode={isDarkMode}
                   />
                 </group>
               );
@@ -290,6 +312,7 @@ export default function CircuitSchematic2D({
                   <SchematicOpAmp
                     type="opamp"
                     position={position}
+                    isDarkMode={isDarkMode}
                   />
                 </group>
               );
@@ -299,6 +322,7 @@ export default function CircuitSchematic2D({
                   <SchematicIC
                     type="ic"
                     position={position}
+                    isDarkMode={isDarkMode}
                   />
                 </group>
               );
@@ -314,6 +338,7 @@ export default function CircuitSchematic2D({
                 isClicked={clickedSlots[node.id] || false}
                 hasSelectedComponent={!!selectedComponentFromUI}
                 selectedComponentType={selectedComponentFromUI}
+                isDarkMode={isDarkMode}
               />
             );
           }
@@ -424,6 +449,7 @@ export default function CircuitSchematic2D({
                 key={`${node.id}-${connectedId}-h1`}
                 from={[fromConnectionX, fromConnectionY, 0]}
                 to={[midX, fromConnectionY, 0]}
+                isDarkMode={isDarkMode}
               />
             );
             
@@ -433,6 +459,7 @@ export default function CircuitSchematic2D({
                 key={`${node.id}-${connectedId}-v`}
                 from={[midX, fromConnectionY, 0]}
                 to={[midX, toConnectionY, 0]}
+                isDarkMode={isDarkMode}
               />
             );
             
@@ -442,6 +469,7 @@ export default function CircuitSchematic2D({
                 key={`${node.id}-${connectedId}-h2`}
                 from={[midX, toConnectionY, 0]}
                 to={[toConnectionX, toConnectionY, 0]}
+                isDarkMode={isDarkMode}
               />
             );
           } else {
@@ -451,6 +479,7 @@ export default function CircuitSchematic2D({
                 key={`${node.id}-${connectedId}`}
                 from={[fromConnectionX, fromConnectionY, 0]}
                 to={[toConnectionX, toConnectionY, 0]}
+                isDarkMode={isDarkMode}
               />
             );
           }

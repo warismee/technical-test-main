@@ -30,6 +30,109 @@ function LoadingSpinner() {
   );
 }
 
+interface QuestionSummaryProps {
+  isValid: boolean;
+  score: number;
+  errors: string[];
+  totalScore: number;
+  questionsCorrect: number;
+  questionsAnswered: number;
+  onNextQuestion: () => void;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
+}
+
+function QuestionSummary({ 
+  isValid, 
+  score, 
+  errors, 
+  totalScore, 
+  questionsCorrect, 
+  questionsAnswered, 
+  onNextQuestion,
+  isDarkMode = false,
+  onToggleDarkMode
+}: QuestionSummaryProps) {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-lg shadow-xl p-8 max-w-md w-full mx-4 relative`}>
+        {/* Dark Mode Toggle */}
+        {onToggleDarkMode && (
+          <button
+            onClick={onToggleDarkMode}
+            className={`absolute top-4 right-4 p-2 rounded-lg transition-colors ${
+              isDarkMode 
+                ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400' 
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+            }`}
+            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {isDarkMode ? '☀️' : '🌙'}
+          </button>
+        )}
+        <div className="text-center">
+          <div className="text-6xl mb-4">
+            {isValid ? "✅" : "❌"}
+          </div>
+          
+          <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+            {isValid ? "Great Job!" : "Not Quite Right"}
+          </h2>
+          
+          {isValid ? (
+            <div className="mb-6">
+              <p className="text-lg text-green-600 font-semibold mb-2">
+                Circuit is valid! 🎉
+              </p>
+              <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
+                You earned <span className="font-bold text-blue-600">{score}</span> points!
+              </p>
+            </div>
+          ) : (
+            <div className="mb-6">
+              <p className="text-lg text-red-600 font-semibold mb-3">
+                Circuit validation failed
+              </p>
+              <div className={`${isDarkMode ? 'bg-red-900 border-red-700' : 'bg-red-50 border-red-200'} border rounded-lg p-3 mb-4`}>
+                <div className={`text-sm ${isDarkMode ? 'text-red-300' : 'text-red-700'} space-y-1`}>
+                  {errors.map((error, index) => (
+                    <div key={index}>• {error}</div>
+                  ))}
+                </div>
+              </div>
+              <p className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
+                Score: <span className="font-bold">0</span> points
+              </p>
+            </div>
+          )}
+          
+          <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4 mb-6`}>
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div>
+                <div className="text-xl font-bold text-blue-600">{totalScore}</div>
+                <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Score</div>
+              </div>
+              <div>
+                <div className="text-xl font-bold text-green-600">
+                  {questionsCorrect}/{questionsAnswered}
+                </div>
+                <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Correct</div>
+              </div>
+            </div>
+          </div>
+          
+          <button
+            onClick={onNextQuestion}
+            className="w-full py-3 px-6 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors"
+          >
+            Continue to Next Question →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface GameSummaryProps {
   score: number;
   questionsAnswered: number;
@@ -38,9 +141,11 @@ interface GameSummaryProps {
   onRestart: () => void;
   onChangeDifficulty: (newDifficulty: "easy" | "medium" | "hard") => void;
   onBackToMenu: () => void;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
 }
 
-function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, onRestart, onChangeDifficulty, onBackToMenu }: GameSummaryProps) {
+function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, onRestart, onChangeDifficulty, onBackToMenu, isDarkMode = false, onToggleDarkMode }: GameSummaryProps) {
   const totalQuestions = getTotalQuestionsForDifficulty(difficulty);
   const accuracy = questionsAnswered > 0 ? Math.round((questionsCorrect / questionsAnswered) * 100) : 0;
   const averageScore = questionsAnswered > 0 ? Math.round(score / questionsAnswered) : 0;
@@ -61,34 +166,48 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
   };
 
   return (
-    <div className="flex items-center justify-center h-full bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
+    <div className={`flex items-center justify-center h-full ${isDarkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-blue-50 to-indigo-100'}`}>
+      <div className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-lg shadow-xl p-8 max-w-md w-full mx-4 relative`}>
+        {/* Dark Mode Toggle */}
+        {onToggleDarkMode && (
+          <button
+            onClick={onToggleDarkMode}
+            className={`absolute top-4 right-4 p-2 rounded-lg transition-colors ${
+              isDarkMode 
+                ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400' 
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+            }`}
+            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {isDarkMode ? '☀️' : '🌙'}
+          </button>
+        )}
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">🎉 Game Complete!</h2>
-          <p className="text-gray-600 mb-6">You've completed all {totalQuestions} {difficulty} circuit challenges!</p>
+          <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-2`}>🎉 Game Complete!</h2>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-6`}>You've completed all {totalQuestions} {difficulty} circuit challenges!</p>
           
-          <div className="bg-gray-50 rounded-lg p-6 mb-6">
+          <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-6 mb-6`}>
             <div className="grid grid-cols-2 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold text-blue-600">{score}</div>
-                <div className="text-sm text-gray-600">Total Score</div>
+                <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Score</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-green-600">{accuracy}%</div>
-                <div className="text-sm text-gray-600">Accuracy</div>
+                <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Accuracy</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-purple-600">{questionsCorrect}</div>
-                <div className="text-sm text-gray-600">Correct</div>
+                <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Correct</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-orange-600">{averageScore}</div>
-                <div className="text-sm text-gray-600">Avg Score</div>
+                <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Avg Score</div>
               </div>
             </div>
           </div>
 
-          <p className="text-lg mb-6 text-gray-700">{getPerformanceMessage()}</p>
+          <p className={`text-lg mb-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>{getPerformanceMessage()}</p>
 
           <div className="space-y-3">
             <button
@@ -126,9 +245,11 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
 interface DifficultyMenuProps {
   onStartGame: (difficulty: "easy" | "medium" | "hard") => void;
   theme: string;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
 }
 
-function DifficultyMenu({ onStartGame, theme }: DifficultyMenuProps) {
+function DifficultyMenu({ onStartGame, theme, isDarkMode = false, onToggleDarkMode }: DifficultyMenuProps) {
   const getDifficultyColor = (diff: "easy" | "medium" | "hard") => {
     switch (diff) {
       case 'easy': return 'bg-green-500 hover:bg-green-600 border-green-300';
@@ -154,11 +275,26 @@ function DifficultyMenu({ onStartGame, theme }: DifficultyMenuProps) {
   };
 
   return (
-    <div className="flex items-center justify-center h-full bg-gradient-to-br from-blue-50 to-indigo-100">
-      <div className="bg-white rounded-lg shadow-xl p-8 max-w-2xl w-full mx-4">
+    <div className={`flex items-center justify-center h-full ${isDarkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-blue-50 to-indigo-100'}`}>
+      <div className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-lg shadow-xl p-8 max-w-2xl w-full mx-4 relative`}>
+        {/* Dark Mode Toggle */}
+        {onToggleDarkMode && (
+          <button
+            onClick={onToggleDarkMode}
+            className={`absolute top-4 right-4 p-2 rounded-lg transition-colors ${
+              isDarkMode 
+                ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400' 
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+            }`}
+            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {isDarkMode ? '☀️' : '🌙'}
+          </button>
+        )}
+        
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">🔌 Circuit Challenge</h1>
-          <p className="text-gray-600 text-lg">Choose your difficulty level to begin the circuit building challenge!</p>
+          <h1 className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-2`}>🔌 Circuit Challenge</h1>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-lg`}>Choose your difficulty level to begin the circuit building challenge!</p>
         </div>
         
         <div className="grid gap-6 md:grid-cols-3">
@@ -182,9 +318,9 @@ function DifficultyMenu({ onStartGame, theme }: DifficultyMenuProps) {
         </div>
         
         <div className="mt-8 text-center">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-800 mb-2">How to Play:</h3>
-            <div className="text-sm text-gray-600 space-y-1">
+          <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4`}>
+            <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-2`}>How to Play:</h3>
+            <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} space-y-1`}>
               <p>• Select the blank component in the circuit</p>
               <p>• Select the correct components to complete each circuit</p>
               <p>• Click "Submit" to check your solution</p>
@@ -234,6 +370,20 @@ export const Block: React.FC<BlockProps> = ({
   
   // Game started state
   const [isGameStarted, setIsGameStarted] = useState(false);
+  
+  // Dark mode state
+  const [isDarkMode, setIsDarkMode] = useState(theme === "dark");
+  
+  // Question summary state
+  const [showQuestionSummary, setShowQuestionSummary] = useState(false);
+  const [questionSummaryData, setQuestionSummaryData] = useState<{
+    isValid: boolean;
+    score: number;
+    errors: string[];
+    totalScore: number;
+    questionsCorrect: number;
+    questionsAnswered: number;
+  } | null>(null);
 
   // Get the current circuit template based on difficulty (memoized to prevent refresh on component selection)
   const currentTemplate = useMemo(() => {
@@ -266,6 +416,9 @@ export const Block: React.FC<BlockProps> = ({
     // Reset shown questions for new difficulty level
     setShownQuestionIds([]);
     setIsGameComplete(false);
+    // Reset summary state
+    setShowQuestionSummary(false);
+    setQuestionSummaryData(null);
     // Optionally reset score/stats when changing difficulty
     // setScore(0);
     // setQuestionsAnswered(0);
@@ -278,6 +431,8 @@ export const Block: React.FC<BlockProps> = ({
     setSelectedComponentFromUI(null);
     setShownQuestionIds([]);
     setIsGameComplete(false);
+    setShowQuestionSummary(false);
+    setQuestionSummaryData(null);
     setScore(0);
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
@@ -291,6 +446,8 @@ export const Block: React.FC<BlockProps> = ({
     setSelectedComponentFromUI(null);
     setShownQuestionIds([]);
     setIsGameComplete(false);
+    setShowQuestionSummary(false);
+    setQuestionSummaryData(null);
     setScore(0);
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
@@ -304,6 +461,8 @@ export const Block: React.FC<BlockProps> = ({
     setSelectedComponentFromUI(null);
     setShownQuestionIds([]);
     setIsGameComplete(false);
+    setShowQuestionSummary(false);
+    setQuestionSummaryData(null);
     setScore(0);
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
@@ -316,6 +475,8 @@ export const Block: React.FC<BlockProps> = ({
     setPlacedComponents({});
     setSelectedComponentFromUI(null);
     setShownQuestionIds([]);
+    setShowQuestionSummary(false);
+    setQuestionSummaryData(null);
     setScore(0);
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
@@ -345,7 +506,7 @@ export const Block: React.FC<BlockProps> = ({
     console.log(`Component removed from ${nodeId}`);
   };
 
-  // Handle circuit validation and move to next question
+  // Handle circuit validation and show summary
   const handleValidateCircuit = () => {
     if (!currentTemplate) {
       console.error('No current template available for validation');
@@ -373,26 +534,49 @@ export const Block: React.FC<BlockProps> = ({
     const newQuestionsAnswered = questionsAnswered + 1;
     setQuestionsAnswered(newQuestionsAnswered);
     
+    let newScore = score;
+    let newQuestionsCorrect = questionsCorrect;
+    
     if (result.isValid) {
-      const newScore = score + result.score;
-      const newQuestionsCorrect = questionsCorrect + 1;
+      newScore = score + result.score;
+      newQuestionsCorrect = questionsCorrect + 1;
       setScore(newScore);
       setQuestionsCorrect(newQuestionsCorrect);
-      
-      alert(`✅ Circuit is valid! Earned ${result.score} points!\nTotal Score: ${newScore}\nCorrect: ${newQuestionsCorrect}/${newQuestionsAnswered}`);
-    } else {
-      alert(`❌ Circuit validation failed:\n${result.errors.join('\n')}\nScore: 0 points\nTotal Score: ${score}\nCorrect: ${questionsCorrect}/${newQuestionsAnswered}`);
     }
     
-    // Reset components for next question
-    setPlacedComponents({});
-    setSelectedComponentFromUI(null);
+    // Show question summary instead of alert
+    setQuestionSummaryData({
+      isValid: result.isValid,
+      score: result.score,
+      errors: result.errors,
+      totalScore: newScore,
+      questionsCorrect: newQuestionsCorrect,
+      questionsAnswered: newQuestionsAnswered
+    });
+    setShowQuestionSummary(true);
     
     console.log('Validation result:', result);
   };
 
-  // Example: adjust background based on theme
-  const backgroundColor = theme === "dark" ? "#111" : "#fafafa";
+  // Handle moving to next question from summary
+  const handleNextQuestion = () => {
+    // Hide summary
+    setShowQuestionSummary(false);
+    setQuestionSummaryData(null);
+    
+    // Reset components for next question
+    setPlacedComponents({});
+    setSelectedComponentFromUI(null);
+  };
+
+  // Handle dark mode toggle
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
+  // Dynamic theme and background based on dark mode
+  const currentTheme = isDarkMode ? "dark" : "light";
+  const backgroundColor = isDarkMode ? "#111" : "#fafafa";
 
   // Mode info descriptions
   const getModeInfo = (mode: ViewMode): string => {
@@ -428,12 +612,13 @@ export const Block: React.FC<BlockProps> = ({
               onComponentPlaced={handleComponentPlaced}
               placedComponents={placedComponents}
               onComponentRemoved={handleComponentRemoved}
+              isDarkMode={isDarkMode}
             />
             {/* 2D Drag-and-drop Overlay */}
             <CircuitUIOverlay 
               currentTemplate={currentTemplate} 
               playerCount={playerCount} 
-              theme={theme}
+              theme={currentTheme}
               onComponentSelected={setSelectedComponentFromUI}
               selectedComponent={selectedComponentFromUI}
               onValidateCircuit={handleValidateCircuit}
@@ -443,6 +628,8 @@ export const Block: React.FC<BlockProps> = ({
               questionsCorrect={questionsCorrect}
               currentDifficulty={currentDifficulty}
               onBackToMenu={handleBackToMenu}
+              isDarkMode={isDarkMode}
+              onToggleDarkMode={toggleDarkMode}
             />
           </>
         );
@@ -454,7 +641,9 @@ export const Block: React.FC<BlockProps> = ({
     return (
       <DifficultyMenu
         onStartGame={handleStartGame}
-        theme={theme}
+        theme={currentTheme}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={toggleDarkMode}
       />
     );
   }
@@ -470,6 +659,8 @@ export const Block: React.FC<BlockProps> = ({
         onRestart={handleGameRestart}
         onChangeDifficulty={handleChangeDifficultyFromSummary}
         onBackToMenu={handleBackToMenu}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={toggleDarkMode}
       />
     );
   }
@@ -477,7 +668,22 @@ export const Block: React.FC<BlockProps> = ({
   return (
     <div className="relative w-full h-full" style={{ backgroundColor }}>
       {/* Render the current view */}
-      {renderCurrentView()}      
+      {renderCurrentView()}
+      
+      {/* Question Summary Modal */}
+      {showQuestionSummary && questionSummaryData && (
+        <QuestionSummary
+          isValid={questionSummaryData.isValid}
+          score={questionSummaryData.score}
+          errors={questionSummaryData.errors}
+          totalScore={questionSummaryData.totalScore}
+          questionsCorrect={questionSummaryData.questionsCorrect}
+          questionsAnswered={questionSummaryData.questionsAnswered}
+          onNextQuestion={handleNextQuestion}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={toggleDarkMode}
+        />
+      )}      
     </div>
   );
 };

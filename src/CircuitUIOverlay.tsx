@@ -14,6 +14,8 @@ interface CircuitUIOverlayProps {
   questionsCorrect?: number;
   currentDifficulty?: "easy" | "medium" | "hard";
   onBackToMenu?: () => void;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
 }
 
 interface Component {
@@ -104,91 +106,91 @@ const InductorSymbol = ({ color = "#333333" }: { color?: string }) => (
   </svg>
 );
 
-const getComponentsFromTemplate = (template: CircuitTemplate): Component[] => {
+const getComponentsFromTemplate = (template: CircuitTemplate, symbolColor: string = "#333333"): Component[] => {
   const allComponents = [
-    { id: "R", type: "R", label: "Resistor", symbol: <ResistorSymbol /> },
-    { id: "L", type: "L", label: "Inductor", symbol: <InductorSymbol /> },
-    { id: "C", type: "C", label: "Capacitor", symbol: <CapacitorSymbol /> },
+    { id: "R", type: "R", label: "Resistor", symbol: <ResistorSymbol color={symbolColor} /> },
+    { id: "L", type: "L", label: "Inductor", symbol: <InductorSymbol color={symbolColor} /> },
+    { id: "C", type: "C", label: "Capacitor", symbol: <CapacitorSymbol color={symbolColor} /> },
     { id: "D", type: "D", label: "Diode", symbol: (
       <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
-        <line x1="2" y1="10" x2="16" y2="10" stroke="#333333" strokeWidth="2" />
-        <polygon points="16,6 16,14 24,10" fill="#333333" />
-        <line x1="24" y1="6" x2="24" y2="14" stroke="#333333" strokeWidth="2" />
-        <line x1="24" y1="10" x2="38" y2="10" stroke="#333333" strokeWidth="2" />
-        <circle cx="2" cy="10" r="1.5" fill="#333333" />
-        <circle cx="38" cy="10" r="1.5" fill="#333333" />
+        <line x1="2" y1="10" x2="16" y2="10" stroke={symbolColor} strokeWidth="2" />
+        <polygon points="16,6 16,14 24,10" fill={symbolColor} />
+        <line x1="24" y1="6" x2="24" y2="14" stroke={symbolColor} strokeWidth="2" />
+        <line x1="24" y1="10" x2="38" y2="10" stroke={symbolColor} strokeWidth="2" />
+        <circle cx="2" cy="10" r="1.5" fill={symbolColor} />
+        <circle cx="38" cy="10" r="1.5" fill={symbolColor} />
       </svg>
     ) },
     { id: "S", type: "S", label: "Switch", symbol: (
       <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
-        <line x1="2" y1="10" x2="12" y2="10" stroke="#333333" strokeWidth="2" />
-        <line x1="12" y1="10" x2="28" y2="6" stroke="#333333" strokeWidth="2" />
-        <line x1="28" y1="10" x2="38" y2="10" stroke="#333333" strokeWidth="2" />
-        <circle cx="12" cy="10" r="1.5" fill="#333333" />
-        <circle cx="28" cy="10" r="1.5" fill="#333333" />
-        <circle cx="2" cy="10" r="1.5" fill="#333333" />
-        <circle cx="38" cy="10" r="1.5" fill="#333333" />
+        <line x1="2" y1="10" x2="12" y2="10" stroke={symbolColor} strokeWidth="2" />
+        <line x1="12" y1="10" x2="28" y2="6" stroke={symbolColor} strokeWidth="2" />
+        <line x1="28" y1="10" x2="38" y2="10" stroke={symbolColor} strokeWidth="2" />
+        <circle cx="12" cy="10" r="1.5" fill={symbolColor} />
+        <circle cx="28" cy="10" r="1.5" fill={symbolColor} />
+        <circle cx="2" cy="10" r="1.5" fill={symbolColor} />
+        <circle cx="38" cy="10" r="1.5" fill={symbolColor} />
       </svg>
     ) },
     { id: "LED", type: "LED", label: "LED", symbol: (
       <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
-        <line x1="2" y1="10" x2="16" y2="10" stroke="#333333" strokeWidth="2" />
+        <line x1="2" y1="10" x2="16" y2="10" stroke={symbolColor} strokeWidth="2" />
         <polygon points="16,6 16,14 24,10" fill="#ff4444" />
-        <line x1="24" y1="6" x2="24" y2="14" stroke="#333333" strokeWidth="2" />
-        <line x1="24" y1="10" x2="38" y2="10" stroke="#333333" strokeWidth="2" />
+        <line x1="24" y1="6" x2="24" y2="14" stroke={symbolColor} strokeWidth="2" />
+        <line x1="24" y1="10" x2="38" y2="10" stroke={symbolColor} strokeWidth="2" />
         <line x1="26" y1="4" x2="30" y2="2" stroke="#ffaa00" strokeWidth="1.5" />
         <line x1="26" y1="16" x2="30" y2="18" stroke="#ffaa00" strokeWidth="1.5" />
-        <circle cx="2" cy="10" r="1.5" fill="#333333" />
-        <circle cx="38" cy="10" r="1.5" fill="#333333" />
+        <circle cx="2" cy="10" r="1.5" fill={symbolColor} />
+        <circle cx="38" cy="10" r="1.5" fill={symbolColor} />
       </svg>
     ) },
     { id: "Q", type: "Q", label: "Transistor", symbol: (
       <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
-        <line x1="2" y1="10" x2="12" y2="10" stroke="#333333" strokeWidth="2" />
-        <line x1="12" y1="6" x2="12" y2="14" stroke="#333333" strokeWidth="3" />
-        <line x1="12" y1="8" x2="20" y2="4" stroke="#333333" strokeWidth="2" />
-        <line x1="12" y1="12" x2="20" y2="16" stroke="#333333" strokeWidth="2" />
-        <line x1="20" y1="4" x2="20" y2="2" stroke="#333333" strokeWidth="2" />
-        <line x1="20" y1="16" x2="20" y2="18" stroke="#333333" strokeWidth="2" />
-        <polygon points="18,15 20,16 19,17" fill="#333333" />
-        <circle cx="2" cy="10" r="1.5" fill="#333333" />
-        <circle cx="20" cy="2" r="1.5" fill="#333333" />
-        <circle cx="20" cy="18" r="1.5" fill="#333333" />
+        <line x1="2" y1="10" x2="12" y2="10" stroke={symbolColor} strokeWidth="2" />
+        <line x1="12" y1="6" x2="12" y2="14" stroke={symbolColor} strokeWidth="3" />
+        <line x1="12" y1="8" x2="20" y2="4" stroke={symbolColor} strokeWidth="2" />
+        <line x1="12" y1="12" x2="20" y2="16" stroke={symbolColor} strokeWidth="2" />
+        <line x1="20" y1="4" x2="20" y2="2" stroke={symbolColor} strokeWidth="2" />
+        <line x1="20" y1="16" x2="20" y2="18" stroke={symbolColor} strokeWidth="2" />
+        <polygon points="18,15 20,16 19,17" fill={symbolColor} />
+        <circle cx="2" cy="10" r="1.5" fill={symbolColor} />
+        <circle cx="20" cy="2" r="1.5" fill={symbolColor} />
+        <circle cx="20" cy="18" r="1.5" fill={symbolColor} />
       </svg>
     ) },
     { id: "OP", type: "OP", label: "Op-Amp", symbol: (
       <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
-        <polygon points="8,4 8,16 32,10" fill="none" stroke="#333333" strokeWidth="2" />
-        <line x1="2" y1="7" x2="8" y2="7" stroke="#333333" strokeWidth="2" />
-        <line x1="2" y1="13" x2="8" y2="13" stroke="#333333" strokeWidth="2" />
-        <line x1="32" y1="10" x2="38" y2="10" stroke="#333333" strokeWidth="2" />
-        <line x1="20" y1="4" x2="20" y2="2" stroke="#333333" strokeWidth="2" />
-        <line x1="20" y1="16" x2="20" y2="18" stroke="#333333" strokeWidth="2" />
-        <text x="12" y="8" fontSize="6" fill="#333333">+</text>
-        <text x="12" y="14" fontSize="6" fill="#333333">-</text>
-        <circle cx="2" cy="7" r="1.5" fill="#333333" />
-        <circle cx="2" cy="13" r="1.5" fill="#333333" />
-        <circle cx="38" cy="10" r="1.5" fill="#333333" />
-        <circle cx="20" cy="2" r="1.5" fill="#333333" />
-        <circle cx="20" cy="18" r="1.5" fill="#333333" />
+        <polygon points="8,4 8,16 32,10" fill="none" stroke={symbolColor} strokeWidth="2" />
+        <line x1="2" y1="7" x2="8" y2="7" stroke={symbolColor} strokeWidth="2" />
+        <line x1="2" y1="13" x2="8" y2="13" stroke={symbolColor} strokeWidth="2" />
+        <line x1="32" y1="10" x2="38" y2="10" stroke={symbolColor} strokeWidth="2" />
+        <line x1="20" y1="4" x2="20" y2="2" stroke={symbolColor} strokeWidth="2" />
+        <line x1="20" y1="16" x2="20" y2="18" stroke={symbolColor} strokeWidth="2" />
+        <text x="12" y="8" fontSize="6" fill={symbolColor}>+</text>
+        <text x="12" y="14" fontSize="6" fill={symbolColor}>-</text>
+        <circle cx="2" cy="7" r="1.5" fill={symbolColor} />
+        <circle cx="2" cy="13" r="1.5" fill={symbolColor} />
+        <circle cx="38" cy="10" r="1.5" fill={symbolColor} />
+        <circle cx="20" cy="2" r="1.5" fill={symbolColor} />
+        <circle cx="20" cy="18" r="1.5" fill={symbolColor} />
       </svg>
     ) },
     { id: "IC", type: "IC", label: "IC", symbol: (
       <svg width="40" height="20" viewBox="0 0 40 20" fill="none">
-        <rect x="8" y="4" width="24" height="12" fill="none" stroke="#333333" strokeWidth="2" />
-        <line x1="2" y1="7" x2="8" y2="7" stroke="#333333" strokeWidth="2" />
-        <line x1="2" y1="13" x2="8" y2="13" stroke="#333333" strokeWidth="2" />
-        <line x1="32" y1="7" x2="38" y2="7" stroke="#333333" strokeWidth="2" />
-        <line x1="32" y1="13" x2="38" y2="13" stroke="#333333" strokeWidth="2" />
-        <line x1="20" y1="4" x2="20" y2="2" stroke="#333333" strokeWidth="2" />
-        <line x1="20" y1="16" x2="20" y2="18" stroke="#333333" strokeWidth="2" />
-        <text x="20" y="12" fontSize="8" fill="#333333" textAnchor="middle">IC</text>
-        <circle cx="2" cy="7" r="1.5" fill="#333333" />
-        <circle cx="2" cy="13" r="1.5" fill="#333333" />
-        <circle cx="38" cy="7" r="1.5" fill="#333333" />
-        <circle cx="38" cy="13" r="1.5" fill="#333333" />
-        <circle cx="20" cy="2" r="1.5" fill="#333333" />
-        <circle cx="20" cy="18" r="1.5" fill="#333333" />
+        <rect x="8" y="4" width="24" height="12" fill="none" stroke={symbolColor} strokeWidth="2" />
+        <line x1="2" y1="7" x2="8" y2="7" stroke={symbolColor} strokeWidth="2" />
+        <line x1="2" y1="13" x2="8" y2="13" stroke={symbolColor} strokeWidth="2" />
+        <line x1="32" y1="7" x2="38" y2="7" stroke={symbolColor} strokeWidth="2" />
+        <line x1="32" y1="13" x2="38" y2="13" stroke={symbolColor} strokeWidth="2" />
+        <line x1="20" y1="4" x2="20" y2="2" stroke={symbolColor} strokeWidth="2" />
+        <line x1="20" y1="16" x2="20" y2="18" stroke={symbolColor} strokeWidth="2" />
+        <text x="20" y="12" fontSize="8" fill={symbolColor} textAnchor="middle">IC</text>
+        <circle cx="2" cy="7" r="1.5" fill={symbolColor} />
+        <circle cx="2" cy="13" r="1.5" fill={symbolColor} />
+        <circle cx="38" cy="7" r="1.5" fill={symbolColor} />
+        <circle cx="38" cy="13" r="1.5" fill={symbolColor} />
+        <circle cx="20" cy="2" r="1.5" fill={symbolColor} />
+        <circle cx="20" cy="18" r="1.5" fill={symbolColor} />
       </svg>
     ) },
   ];
@@ -211,10 +213,14 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
   questionsCorrect = 0,
   currentDifficulty = "easy",
   onBackToMenu,
+  isDarkMode = false,
+  onToggleDarkMode,
 }) => {
   const difficulty = currentTemplate.difficulty;
 
-  const components = getComponentsFromTemplate(currentTemplate);
+  // Determine symbol color based on dark mode
+  const symbolColor = isDarkMode ? "#ffffff" : "#333333";
+  const components = getComponentsFromTemplate(currentTemplate, symbolColor);
 
   // Handle ESC key to cancel selection
   React.useEffect(() => {
@@ -361,6 +367,21 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
               className={`w-full px-3 py-2 text-xs bg-green-600 hover:bg-green-700 text-white rounded transition-colors font-medium`}
             >
               Submit & Validate Circuit
+            </button>
+          )}
+          
+          {/* Dark Mode Toggle */}
+          {onToggleDarkMode && (
+            <button
+              onClick={onToggleDarkMode}
+              className={`w-full px-3 py-2 text-xs rounded transition-colors ${
+                isDarkMode 
+                  ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400' 
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+              }`}
+              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            >
+              {isDarkMode ? '☀️ Light Mode' : '🌙 Dark Mode'}
             </button>
           )}
         </div>
