@@ -16,9 +16,8 @@ export interface CircuitTemplate {
   requiredComponents: { type: string; count: number }[];
   targetTopology: CircuitNode[];
   validationRules: {
-    seriesConnections?: string[][];
-    parallelConnections?: string[][];
-    requiredPath?: string[];
+    componentCount?: Record<string, number>;
+    requiredPlacements?: Array<{ nodeId: string; expectedType: string; position: { x: number; y: number } }>;
   };
 }
 
@@ -50,8 +49,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['L1'], position: { x: 400, y: 200 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'R1', 'L1', 'B']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:1,L:1}
     }
   },
   {
@@ -70,8 +68,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 400, y: 200 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'R1', 'C1', 'B']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:1,C:1}
     }
   },
   {
@@ -89,8 +86,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['R2'], position: { x: 400, y: 200 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'R1', 'R2', 'B']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:2}
     }
   },
   {
@@ -108,8 +104,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['C1', 'C2'], position: { x: 300, y: 200 } }
     ],
     validationRules: {
-      parallelConnections: [['C1', 'C2']],
-      requiredPath: ['A', 'B']
+      componentCount: {C:2}
     }
   },
   {
@@ -130,8 +125,11 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 450, y: 200 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'S1', 'R1', 'C1', 'B']],
-      requiredPath: ['A', 'B']
+      requiredPlacements: [
+        { nodeId: 'S1', expectedType: 'S', position: { x: 150, y: 200 } },
+        { nodeId: 'R1', expectedType: 'R', position: { x: 250, y: 200 } },
+        { nodeId: 'C1', expectedType: 'C', position: { x: 350, y: 200 } }
+      ]
     }
   },
   {
@@ -150,8 +148,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['L1'], position: { x: 400, y: 200 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'R1', 'L1', 'B']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:1,L:1}
     }
   },
   {
@@ -171,8 +168,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['R2'], position: { x: 300, y: 400 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'R1', 'J1', 'R2', 'B']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:2}
     }
   },
   {
@@ -191,8 +187,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['LED1'], position: { x: 400, y: 200 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'R1', 'LED1', 'B']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:1,LED:1}
     }
   },
   {
@@ -211,8 +206,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['R1', 'R2', 'R3'], position: { x: 300, y: 200 } }
     ],
     validationRules: {
-      parallelConnections: [['R1', 'R2', 'R3']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:3}
     }
   },
   {
@@ -231,8 +225,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 400, y: 200 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'R1', 'C1', 'B']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:1,C:1}
     }
   },
   // MEDIUM CIRCUITS (10 total)
@@ -252,8 +245,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['R1', 'C1'], position: { x: 300, y: 200 } }
     ],
     validationRules: {
-      parallelConnections: [['R1', 'C1']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:1,C:1}
     }
   },
   {
@@ -274,8 +266,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 450, y: 200 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'R1', 'L1', 'C1', 'B']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:1,L:1,C:1}
     }
   },
   {
@@ -296,8 +287,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['R1', 'L1', 'C1'], position: { x: 300, y: 200 } }
     ],
     validationRules: {
-      parallelConnections: [['R1', 'L1', 'C1']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:3,L:1,C:1}
     }
   },
   {
@@ -320,9 +310,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['C1', 'R2'], position: { x: 450, y: 200 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'S1', 'R1', 'J1']],
-      parallelConnections: [['C1', 'R2']],
-      requiredPath: ['A', 'B']
+      componentCount: {S:1,R:1}
     }
   },
   {
@@ -344,9 +332,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['R4'], position: { x: 580, y: 200 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'R1', 'J1'], ['J2', 'R4', 'B']],
-      parallelConnections: [['R2', 'R3']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:4}
     }
   },
   {
@@ -368,7 +354,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['R3', 'R4'], position: { x: 200, y: 350 } }
     ],
     validationRules: {
-      requiredPath: ['A', 'B']
+      componentCount: {R:4}
     }
   },
   {
@@ -389,9 +375,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['R2', 'L1'], position: { x: 500, y: 200 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'R1', 'J1']],
-      parallelConnections: [['R2', 'L1']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:1}
     }
   },
   {
@@ -415,7 +399,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'GND', type: 'terminal', connections: ['Q1'], position: { x: 250, y: 400 } }
     ],
     validationRules: {
-      requiredPath: ['VCC', 'GND']
+      componentCount: {R:2,T:1}
     }
   },
   {
@@ -436,8 +420,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['R2'], position: { x: 300, y: 400 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'R1', 'J1', 'R2', 'B']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:1}
     }
   },
   {
@@ -458,8 +441,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'GND', type: 'terminal', connections: ['C1'], position: { x: 300, y: 400 } }
     ],
     validationRules: {
-      seriesConnections: [['IN', 'R1', 'J1']],
-      requiredPath: ['IN', 'GND']
+      componentCount: {R:1,C:1}
     }
   },
   // HARD CIRCUITS (10 total)
@@ -484,9 +466,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 700, y: 200 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'R1', 'J1'], ['J2', 'C1', 'B']],
-      parallelConnections: [['R2', 'L1']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:2,T:1}
     }
   },
   {
@@ -513,9 +493,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['R3', 'C2'], position: { x: 850, y: 200 } }
     ],
     validationRules: {
-      seriesConnections: [['A', 'R1', 'J1'], ['J2', 'C1', 'J3']],
-      parallelConnections: [['R2', 'L1'], ['R3', 'C2']],
-      requiredPath: ['A', 'B']
+      componentCount: {R:1,C:1}
     }
   },
   {
@@ -542,9 +520,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 750, y: 200 } }
     ],
     validationRules: {
-      parallelConnections: [['S1', 'S2']],
-      seriesConnections: [['J2', 'R2', 'C1', 'B']],
-      requiredPath: ['A', 'B']
+      componentCount: { R: 4, C: 2, S: 2 }
     }
   },
   {
@@ -573,7 +549,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'GND', type: 'terminal', connections: ['R3', 'R4'], position: { x: 250, y: 400 } }
     ],
     validationRules: {
-      requiredPath: ['VCC', 'GND']
+      componentCount: { R: 4, C: 2, T: 1 }
     }
   },
   {
@@ -600,8 +576,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'GND', type: 'terminal', connections: ['R3'], position: { x: 300, y: 450 } }
     ],
     validationRules: {
-      seriesConnections: [['VIN', 'R1', 'J1', 'R2', 'J2', 'R3', 'GND']],
-      requiredPath: ['VIN', 'GND']
+      componentCount: { R: 6 }
     }
   },
   {
@@ -627,8 +602,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'C1', type: 'component', connections: ['PLUS', 'MINUS'], position: { x: 500, y: 300 } }
     ],
     validationRules: {
-      parallelConnections: [['R1', 'C1']],
-      requiredPath: ['AC1', 'AC2']
+      componentCount: { D: 4, R: 1, C: 1 }
     }
   },
   {
@@ -656,7 +630,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'GND', type: 'terminal', connections: ['C1', 'Q1'], position: { x: 300, y: 350 } }
     ],
     validationRules: {
-      requiredPath: ['VCC', 'GND']
+      componentCount: { R: 2, C: 1, T: 1, LED: 1 }
     }
   },
   {
@@ -684,7 +658,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'GND', type: 'terminal', connections: ['OP1'], position: { x: 300, y: 400 } }
     ],
     validationRules: {
-      requiredPath: ['VCC', 'GND']
+      componentCount: { R: 3, C: 1, OP: 1 }
     }
   },
   {
@@ -714,7 +688,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'GND', type: 'terminal', connections: ['IC1_GND'], position: { x: 300, y: 350 } }
     ],
     validationRules: {
-      requiredPath: ['VCC', 'GND']
+      componentCount: { IC: 1, R: 3, C: 2 }
     }
   },
   {
@@ -744,7 +718,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'GND', type: 'terminal', connections: ['Q1', 'R2'], position: { x: 500, y: 400 } }
     ],
     validationRules: {
-      requiredPath: ['VCC', 'GND']
+      componentCount: { D: 2, T: 1, R: 3, LED: 1 }
     }
   }
 ];
@@ -861,34 +835,25 @@ function validateCircuitRules(
   const errors: string[] = [];
   let score = 0;
 
-  // Validate series connections
-  if (template.validationRules.seriesConnections) {
-    template.validationRules.seriesConnections.forEach(seriesPath => {
-      if (validateSeriesPath(connections, seriesPath)) {
-        score += 15; // Points for correct series connection
-      } else {
-        errors.push(`Required series connection not found: ${seriesPath.join(' -> ')}`);
-      }
-    });
-  }
+  // Validate component count only
+  const componentCount = template.validationRules.componentCount;
+  const actualCount: { [key: string]: number } = {};
+  
+  // Count components that are placed
+  placedComponents.forEach(component => {
+    const componentType = component.type;
+    actualCount[componentType] = (actualCount[componentType] || 0) + 1;
+  });
 
-  // Validate parallel connections
-  if (template.validationRules.parallelConnections) {
-    template.validationRules.parallelConnections.forEach(parallelGroup => {
-      if (validateParallelGroup(connections, parallelGroup)) {
-        score += 15; // Points for correct parallel connection
+  // Check if actual count matches required count
+  if (componentCount) {
+    for (const [componentType, requiredCount] of Object.entries(componentCount)) {
+      const actual = actualCount[componentType] || 0;
+      if (actual === requiredCount) {
+        score += 20; // Points for correct component count
       } else {
-        errors.push(`Required parallel connection not found: ${parallelGroup.join(' || ')}`);
+        errors.push(`Expected ${requiredCount} ${componentType} components, found ${actual}`);
       }
-    });
-  }
-
-  // Validate required paths
-  if (template.validationRules.requiredPath) {
-    if (validatePath(connections, template.validationRules.requiredPath)) {
-      score += 10; // Points for required path
-    } else {
-      errors.push(`Required path not found: ${template.validationRules.requiredPath.join(' -> ')}`);
     }
   }
 
