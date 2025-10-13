@@ -2,7 +2,7 @@ import React, { Suspense, useState, useMemo, useEffect } from "react";
 import { Html } from "@react-three/drei";
 import { CircuitUIOverlay } from "./CircuitUIOverlay";
 import CircuitSchematic2DScene from "./CircuitSchematic2DScene";
-import { circuitTemplates, generateRandomChallenge, generateUniqueChallenge, validateCircuit, getTotalQuestionsForDifficulty } from "./circuitLogic";
+import { circuitTemplates, generateUniqueChallenge, validateCircuit, getTotalQuestionsForDifficulty } from "./circuitLogic";
 import { 
   MdLightMode, 
   MdDarkMode, 
@@ -429,7 +429,7 @@ export const Block: React.FC<BlockProps> = ({
     questionsCorrect: number;
     questionsAnswered: number;
   } | null>(null);
-
+  
   // Get the current circuit template based on difficulty (memoized to prevent refresh on component selection)
   const currentTemplate = useMemo(() => {
     const template = generateUniqueChallenge(currentDifficulty, shownQuestionIds);

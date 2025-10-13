@@ -923,13 +923,6 @@ function validatePath(connections: Array<{ from: string; to: string }>, path: st
   return validateSeriesPath(connections, path);
 }
 
-// Random challenge generator
-export function generateRandomChallenge(difficulty: 'easy' | 'medium' | 'hard'): CircuitTemplate {
-  const templatesForDifficulty = circuitTemplates.filter(t => t.difficulty === difficulty);
-  const randomIndex = Math.floor(Math.random() * templatesForDifficulty.length);
-  return templatesForDifficulty[randomIndex];
-}
-
 // Generate unique challenge avoiding already shown ones
 export function generateUniqueChallenge(
   difficulty: 'easy' | 'medium' | 'hard', 
