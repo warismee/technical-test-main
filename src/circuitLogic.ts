@@ -287,7 +287,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['R1', 'L1', 'C1'], position: { x: 300, y: 200 } }
     ],
     validationRules: {
-      componentCount: {R:3,L:1,C:1}
+      componentCount: {R:1,L:1,C:1}
     }
   },
   {
@@ -310,7 +310,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['C1', 'R2'], position: { x: 450, y: 200 } }
     ],
     validationRules: {
-      componentCount: {S:1,R:1}
+      componentCount: {S:1,R:2,C:1}
     }
   },
   {
@@ -368,14 +368,13 @@ export const circuitTemplates: CircuitTemplate[] = [
     ],
     targetTopology: [
       { id: 'A', type: 'terminal', connections: ['R1'], position: { x: 100, y: 200 } },
-      { id: 'R1', type: 'component', connections: ['A', 'J1'], position: { x: 200, y: 200 } },
-      { id: 'J1', type: 'junction', connections: ['R1', 'R2', 'L1'], position: { x: 300, y: 200 } },
-      { id: 'R2', type: 'component', connections: ['J1', 'B'], position: { x: 400, y: 150 } },
-      { id: 'L1', type: 'component', connections: ['J1', 'B'], position: { x: 400, y: 250 } },
+      { id: 'R1', type: 'component', connections: ['A', 'R2', 'L1'], position: { x: 200, y: 200 } },
+      { id: 'R2', type: 'component', connections: ['R1', 'B'], position: { x: 400, y: 150 } },
+      { id: 'L1', type: 'component', connections: ['R1', 'B'], position: { x: 400, y: 250 } },
       { id: 'B', type: 'terminal', connections: ['R2', 'L1'], position: { x: 500, y: 200 } }
     ],
     validationRules: {
-      componentCount: {R:1}
+      componentCount: {R:2, L:1}
     }
   },
   {
@@ -399,7 +398,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'GND', type: 'terminal', connections: ['Q1'], position: { x: 250, y: 400 } }
     ],
     validationRules: {
-      componentCount: {R:2,T:1}
+      componentCount: {R:2,Q:1,LED:1}
     }
   },
   {
@@ -420,7 +419,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['R2'], position: { x: 300, y: 400 } }
     ],
     validationRules: {
-      componentCount: {R:1}
+      componentCount: {R:3}
     }
   },
   {
@@ -466,7 +465,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 700, y: 200 } }
     ],
     validationRules: {
-      componentCount: {R:2,T:1}
+      componentCount: {R:2,C:1,L:1}
     }
   },
   {
@@ -493,7 +492,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['R3', 'C2'], position: { x: 850, y: 200 } }
     ],
     validationRules: {
-      componentCount: {R:1,C:1}
+      componentCount: {R:3,L:1,C:2}
     }
   },
   {
@@ -520,7 +519,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 750, y: 200 } }
     ],
     validationRules: {
-      componentCount: { R: 4, C: 2, S: 2 }
+      componentCount: { R: 2, L: 1, C: 1, S: 2 }
     }
   },
   {
@@ -549,7 +548,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'GND', type: 'terminal', connections: ['R3', 'R4'], position: { x: 250, y: 400 } }
     ],
     validationRules: {
-      componentCount: { R: 4, C: 2, T: 1 }
+      componentCount: { R: 4, C: 2, Q: 1 }
     }
   },
   {
@@ -630,7 +629,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'GND', type: 'terminal', connections: ['C1', 'Q1'], position: { x: 300, y: 350 } }
     ],
     validationRules: {
-      componentCount: { R: 2, C: 1, T: 1, LED: 1 }
+      componentCount: { R: 2, C: 1, S: 1, LED: 1, Q: 1 }
     }
   },
   {
@@ -718,7 +717,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'GND', type: 'terminal', connections: ['Q1', 'R2'], position: { x: 500, y: 400 } }
     ],
     validationRules: {
-      componentCount: { D: 2, T: 1, R: 3, LED: 1 }
+      componentCount: { D: 2, Q: 1, R: 3, LED: 1 }
     }
   }
 ];
