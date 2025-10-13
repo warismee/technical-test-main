@@ -23,7 +23,8 @@ function BlankComponentSlot({
   isClicked = false,
   hasSelectedComponent = false,
   selectedComponentType = null,
-  isDarkMode = false
+  isDarkMode = false,
+  rotation = 0
 }: { 
   position: [number, number, number]; 
   nodeId: string;
@@ -32,12 +33,14 @@ function BlankComponentSlot({
   hasSelectedComponent?: boolean;
   selectedComponentType?: string | null;
   isDarkMode?: boolean;
+  rotation?: number;
 }) {
   const [hovered, setHovered] = useState(false);
 
   return (
     <group 
       position={position}
+      rotation={[0, 0, rotation]}
       scale={hovered ? 1.02 : 1}
     >
       {/* Clickable area - adjust size based on component type */}
@@ -124,6 +127,25 @@ export default function CircuitSchematic2D({
 }: CircuitSchematic2DProps) {
   // State to track which slots have been clicked/selected
   const [clickedSlots, setClickedSlots] = useState<{[nodeId: string]: boolean}>({});
+  
+  // Helper function to calculate component rotation
+  const calculateComponentRotation = (node: any): number => {
+    if (node.connections.length >= 2) {
+      const connection1 = template.targetTopology.find(n => n.id === node.connections[0]);
+      const connection2 = template.targetTopology.find(n => n.id === node.connections[1]);
+      
+      if (connection1 && connection2) {
+        const dx = connection2.position.x - connection1.position.x;
+        const dy = connection2.position.y - connection1.position.y;
+        
+        // If the component is more vertical than horizontal, rotate it 90 degrees
+        if (Math.abs(dy) > Math.abs(dx)) {
+          return Math.PI / 2; // 90 degrees for vertical orientation
+        }
+      }
+    }
+    return 0; // 0 degrees for horizontal orientation
+  };
   
   const handleSlotClick = (nodeId: string) => {
     // If a component is selected from UI and we click a slot, place the component
@@ -221,6 +243,9 @@ export default function CircuitSchematic2D({
           const placedComponentType = placedComponents[node.id];
           
           if (placedComponentType) {
+            // Calculate component orientation based on connected nodes
+            const rotation = calculateComponentRotation(node);
+            
             // Render the actual placed component
             const componentMap: { [key: string]: string } = {
               'R': 'resistor',
@@ -242,6 +267,7 @@ export default function CircuitSchematic2D({
                   <SchematicResistor
                     type="resistor"
                     position={position}
+                    rotation={rotation}
                     isDarkMode={isDarkMode}
                   />
                 </group>
@@ -252,6 +278,7 @@ export default function CircuitSchematic2D({
                   <SchematicInductor
                     type="inductor"
                     position={position}
+                    rotation={rotation}
                     isDarkMode={isDarkMode}
                   />
                 </group>
@@ -262,6 +289,7 @@ export default function CircuitSchematic2D({
                   <SchematicCapacitor
                     type="capacitor"
                     position={position}
+                    rotation={rotation}
                     isDarkMode={isDarkMode}
                   />
                 </group>
@@ -272,6 +300,7 @@ export default function CircuitSchematic2D({
                   <SchematicLED
                     type="led"
                     position={position}
+                    rotation={rotation}
                     isDarkMode={isDarkMode}
                   />
                 </group>
@@ -282,6 +311,7 @@ export default function CircuitSchematic2D({
                   <SchematicTransistor
                     type="transistor"
                     position={position}
+                    rotation={rotation}
                     isDarkMode={isDarkMode}
                   />
                 </group>
@@ -292,6 +322,7 @@ export default function CircuitSchematic2D({
                   <SchematicDiode
                     type="diode"
                     position={position}
+                    rotation={rotation}
                     isDarkMode={isDarkMode}
                   />
                 </group>
@@ -302,6 +333,7 @@ export default function CircuitSchematic2D({
                   <SchematicSwitch
                     type="switch"
                     position={position}
+                    rotation={rotation}
                     isDarkMode={isDarkMode}
                   />
                 </group>
@@ -312,6 +344,7 @@ export default function CircuitSchematic2D({
                   <SchematicOpAmp
                     type="opamp"
                     position={position}
+                    rotation={rotation}
                     isDarkMode={isDarkMode}
                   />
                 </group>
@@ -322,12 +355,16 @@ export default function CircuitSchematic2D({
                   <SchematicIC
                     type="ic"
                     position={position}
+                    rotation={rotation}
                     isDarkMode={isDarkMode}
                   />
                 </group>
               );
             }
           } else {
+            // Calculate expected component orientation for the placeholder
+            const rotation = calculateComponentRotation(node);
+            
             // Show blank slot for user to place component
             return (
               <BlankComponentSlot
@@ -339,6 +376,7 @@ export default function CircuitSchematic2D({
                 hasSelectedComponent={!!selectedComponentFromUI}
                 selectedComponentType={selectedComponentFromUI}
                 isDarkMode={isDarkMode}
+                rotation={rotation}
               />
             );
           }
@@ -408,9 +446,18 @@ export default function CircuitSchematic2D({
               fromConnectionX = connectionPoint.x;
               fromConnectionY = connectionPoint.y;
             } else {
-              // Regular component - connect to the left (-1) or right (+1) edge based on relative position
-              fromConnectionX = nodeX + (connectedX > nodeX ? 1 : -1);
-              fromConnectionY = nodeY;
+              // Regular component - determine connection points based on rotation and relative position
+              const componentRotation = calculateComponentRotation(node);
+              
+              if (componentRotation > 0) {
+                // Vertical component - connect to top (+1) or bottom (-1) edge
+                fromConnectionX = nodeX;
+                fromConnectionY = nodeY + (connectedY > nodeY ? 1 : -1);
+              } else {
+                // Horizontal component - connect to left (-1) or right (+1) edge
+                fromConnectionX = nodeX + (connectedX > nodeX ? 1 : -1);
+                fromConnectionY = nodeY;
+              }
             }
           } else {
             // Terminals connect from center
@@ -426,9 +473,18 @@ export default function CircuitSchematic2D({
               toConnectionX = connectionPoint.x;
               toConnectionY = connectionPoint.y;
             } else {
-              // Regular component - connect to the left (-1) or right (+1) edge based on relative position  
-              toConnectionX = connectedX + (nodeX > connectedX ? 1 : -1);
-              toConnectionY = connectedY;
+              // Regular component - determine connection points based on rotation and relative position
+              const connectedComponentRotation = calculateComponentRotation(connectedNode);
+              
+              if (connectedComponentRotation > 0) {
+                // Vertical component - connect to top (+1) or bottom (-1) edge
+                toConnectionX = connectedX;
+                toConnectionY = connectedY + (nodeY > connectedY ? 1 : -1);
+              } else {
+                // Horizontal component - connect to left (-1) or right (+1) edge  
+                toConnectionX = connectedX + (nodeX > connectedX ? 1 : -1);
+                toConnectionY = connectedY;
+              }
             }
           } else {
             // Terminals connect to center

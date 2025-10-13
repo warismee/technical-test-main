@@ -7,9 +7,10 @@ interface SchematicComponentProps {
   type: 'resistor' | 'capacitor' | 'inductor' | 'switch' | 'led' | 'transistor' | 'diode' | 'opamp' | 'ic';
   label?: string;
   isDarkMode?: boolean;
+  rotation?: number; // Rotation in radians for component orientation
 }
 
-function SchematicResistor({ position, label, isDarkMode = false }: SchematicComponentProps) {
+function SchematicResistor({ position, label, isDarkMode = false, rotation = 0 }: SchematicComponentProps) {
   // Create zigzag pattern for resistor
   const zigzagPoints = [
     new THREE.Vector3(-1, 0, 0),
@@ -24,7 +25,7 @@ function SchematicResistor({ position, label, isDarkMode = false }: SchematicCom
   ];
 
   return (
-    <group position={position}>
+    <group position={position} rotation={[0, 0, rotation]}>
       {/* Zigzag resistor symbol */}
       <Line
         points={zigzagPoints}
@@ -58,7 +59,7 @@ function SchematicResistor({ position, label, isDarkMode = false }: SchematicCom
   );
 }
 
-function SchematicCapacitor({ position, label, isDarkMode = false }: SchematicComponentProps) {
+function SchematicCapacitor({ position, label, isDarkMode = false, rotation = 0 }: SchematicComponentProps) {
   // Create parallel lines for capacitor
   const leftPlatePoints = [
     new THREE.Vector3(-0.1, -0.4, 0),
@@ -81,7 +82,7 @@ function SchematicCapacitor({ position, label, isDarkMode = false }: SchematicCo
   ];
 
   return (
-    <group position={position}>
+    <group position={position} rotation={[0, 0, rotation]}>
       {/* Left plate */}
       <Line
         points={leftPlatePoints}
@@ -134,7 +135,7 @@ function SchematicCapacitor({ position, label, isDarkMode = false }: SchematicCo
   );
 }
 
-function SchematicInductor({ position, label, isDarkMode = false }: SchematicComponentProps) {
+function SchematicInductor({ position, label, isDarkMode = false, rotation = 0 }: SchematicComponentProps) {
   // Create coil curves for inductor
   const coilPoints = [];
   const numCoils = 4;
@@ -156,7 +157,7 @@ function SchematicInductor({ position, label, isDarkMode = false }: SchematicCom
   ];
 
   return (
-    <group position={position}>
+    <group position={position} rotation={[0, 0, rotation]}>
       {/* Coil symbol */}
       <Line
         points={coilPoints}
@@ -213,7 +214,7 @@ function SchematicWire({ from, to, isDarkMode = false }: { from: [number, number
   );
 }
 
-function SchematicSwitch({ position, label, isDarkMode = false }: SchematicComponentProps) {
+function SchematicSwitch({ position, label, isDarkMode = false, rotation = 0 }: SchematicComponentProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleClick = () => {
@@ -244,6 +245,7 @@ function SchematicSwitch({ position, label, isDarkMode = false }: SchematicCompo
   return (
     <group 
       position={position}
+      rotation={[0, 0, rotation]}
       onClick={handleClick}
     >
       {/* Connection lines */}
@@ -301,7 +303,7 @@ function SchematicSwitch({ position, label, isDarkMode = false }: SchematicCompo
   );
 }
 
-function SchematicLED({ position, label, isDarkMode = false }: SchematicComponentProps) {
+function SchematicLED({ position, label, isDarkMode = false, rotation = 0 }: SchematicComponentProps) {
 
   // LED diode triangle
   const trianglePoints = [
@@ -340,7 +342,7 @@ function SchematicLED({ position, label, isDarkMode = false }: SchematicComponen
   ];
 
   return (
-    <group position={position}>
+    <group position={position} rotation={[0, 0, rotation]}>
       {/* LED triangle (anode) */}
       <Line
         points={trianglePoints}
@@ -405,7 +407,7 @@ function SchematicLED({ position, label, isDarkMode = false }: SchematicComponen
   );
 }
 
-function SchematicTransistor({ position, label, isDarkMode = false }: SchematicComponentProps) {
+function SchematicTransistor({ position, label, isDarkMode = false, rotation = 0 }: SchematicComponentProps) {
 
   // Base line (vertical)
   const basePoints = [
@@ -450,7 +452,7 @@ function SchematicTransistor({ position, label, isDarkMode = false }: SchematicC
   ];
 
   return (
-    <group position={position}>
+    <group position={position} rotation={[0, 0, rotation]}>
       {/* Base line */}
       <Line
         points={basePoints}
@@ -526,7 +528,7 @@ function SchematicTransistor({ position, label, isDarkMode = false }: SchematicC
   );
 }
 
-function SchematicDiode({ position, label, isDarkMode = false }: SchematicComponentProps) {
+function SchematicDiode({ position, label, isDarkMode = false, rotation = 0 }: SchematicComponentProps) {
 
   // Diode triangle (anode)
   const trianglePoints = [
@@ -554,7 +556,7 @@ function SchematicDiode({ position, label, isDarkMode = false }: SchematicCompon
   ];
 
   return (
-    <group position={position}>
+    <group position={position} rotation={[0, 0, rotation]}>
       {/* Diode triangle (anode) */}
       <Line
         points={trianglePoints}
@@ -607,7 +609,7 @@ function SchematicDiode({ position, label, isDarkMode = false }: SchematicCompon
   );
 }
 
-function SchematicOpAmp({ position, label, isDarkMode = false }: SchematicComponentProps) {
+function SchematicOpAmp({ position, label, isDarkMode = false, rotation = 0 }: SchematicComponentProps) {
 
   // Op-amp triangle
   const trianglePoints = [
@@ -644,7 +646,7 @@ function SchematicOpAmp({ position, label, isDarkMode = false }: SchematicCompon
   ];
 
   return (
-    <group position={position}>
+    <group position={position} rotation={[0, 0, rotation]}>
       {/* Op-amp triangle */}
       <Line
         points={trianglePoints}
@@ -717,7 +719,7 @@ function SchematicOpAmp({ position, label, isDarkMode = false }: SchematicCompon
   );
 }
 
-function SchematicIC({ position, label, isDarkMode = false }: SchematicComponentProps) {
+function SchematicIC({ position, label, isDarkMode = false, rotation = 0 }: SchematicComponentProps) {
 
   // IC package outline
   const packagePoints = [
@@ -737,7 +739,7 @@ function SchematicIC({ position, label, isDarkMode = false }: SchematicComponent
   const gndPoints = [new THREE.Vector3(0, -0.4, 0), new THREE.Vector3(0, -0.8, 0)];
 
   return (
-    <group position={position}>
+    <group position={position} rotation={[0, 0, rotation]}>
       {/* IC package */}
       <Line
         points={packagePoints}
