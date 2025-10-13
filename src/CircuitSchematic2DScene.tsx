@@ -188,6 +188,13 @@ export default function CircuitSchematic2D({
     }
   };
 
+  const handleBackgroundPointerDown = (event: any) => {
+    // Enable dragging when pointer is down on background
+    if (event.eventObject === event.object) {
+      event.stopPropagation();
+    }
+  };
+
   return (
     <Canvas 
       camera={{ position: [0, 0, 10], zoom: 50 }}
@@ -199,10 +206,11 @@ export default function CircuitSchematic2D({
       <ambientLight intensity={0.8} />
       <directionalLight position={[0, 0, 5]} intensity={0.5} />
       
-      {/* Invisible background to capture clicks outside components */}
+      {/* Invisible background to capture clicks and enable dragging */}
       <mesh 
         position={[0, 0, -1]} 
         onClick={handleBackgroundClick}
+        onPointerDown={handleBackgroundPointerDown}
       >
         <planeGeometry args={[100, 100]} />
         <meshBasicMaterial transparent opacity={0} />
@@ -544,14 +552,24 @@ export default function CircuitSchematic2D({
         });
       }).flat().filter(Boolean)}
       
-      {/* 2D Camera Controls - pan and zoom only */}
+      {/* 2D Camera Controls - enhanced pan and zoom with drag functionality */}
       <OrbitControls
-        enablePan
-        enableZoom
+        enablePan={true}
+        enableZoom={true}
         enableRotate={false} // Disable rotation for pure 2D view
         maxDistance={20}
         minDistance={2}
         zoomSpeed={0.5}
+        panSpeed={1.0} // Control panning sensitivity
+        mouseButtons={{
+          LEFT: THREE.MOUSE.PAN, // Left mouse button for panning/dragging
+          MIDDLE: THREE.MOUSE.DOLLY, // Middle mouse button for zooming
+          RIGHT: THREE.MOUSE.PAN // Right mouse button also for panning
+        }}
+        touches={{
+          ONE: THREE.TOUCH.PAN, // Single touch for panning on mobile
+          TWO: THREE.TOUCH.DOLLY_PAN // Two-finger touch for zoom and pan
+        }}
       />
     </Canvas>
   );
