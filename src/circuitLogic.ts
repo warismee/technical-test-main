@@ -307,16 +307,19 @@ export const circuitTemplates: CircuitTemplate[] = [
       { type: 'S', count: 1 }
     ],
     targetTopology: [
-      { id: 'A', type: 'terminal', connections: ['S1'], position: { x: 50, y: 200 } },
-      { id: 'S1', type: 'component', connections: ['A', 'R1'], position: { x: 120, y: 200 } },
-      { id: 'R1', type: 'component', connections: ['S1', 'J1'], position: { x: 200, y: 200 } },
-      { id: 'J1', type: 'junction', connections: ['R1', 'C1', 'R2'], position: { x: 280, y: 200 } },
-      { id: 'C1', type: 'component', connections: ['J1', 'B'], position: { x: 360, y: 150 } },
-      { id: 'R2', type: 'component', connections: ['J1', 'B'], position: { x: 360, y: 250 } },
-      { id: 'B', type: 'terminal', connections: ['C1', 'R2'], position: { x: 450, y: 200 } }
+      { id: 'A', type: 'terminal', connections: ['S1'], position: { x: 30, y: 200 } },
+      { id: 'S1', type: 'component', connections: ['A', 'R1'], position: { x: 100, y: 200 } },
+      { id: 'R1', type: 'component', connections: ['S1', 'C1', 'R2'], position: { x: 200, y: 200 } },
+      { id: 'C1', type: 'component', connections: ['R1', 'GND'], position: { x: 320, y: 150 } },
+      { id: 'R2', type: 'component', connections: ['R1', 'GND'], position: { x: 320, y: 250 } },
+      { id: 'GND', type: 'terminal', connections: ['C1', 'R2'], position: { x: 400, y: 200 } }
     ],
     validationRules: {
-      componentCount: {S:1,R:2,C:1}
+      componentCount: { S: 1, R: 2, C: 1 },
+      requiredPlacements: [
+        { nodeId: 'S1', expectedType: 'S', position: { x: 100, y: 200 } },
+        { nodeId: 'R1', expectedType: 'R', position: { x: 200, y: 200 } }
+      ]
     }
   },
   {
@@ -743,63 +746,81 @@ export function validateCircuit(
   const errors: string[] = [];
   let score = 0;
 
-  // Check if template uses requiredPlacements (specific positioning) or componentCount (flexible positioning)
-  const useRequiredPlacements = template.validationRules.requiredPlacements && template.validationRules.requiredPlacements.length > 0;
+  // Determine which validation paths are present
+  const hasRequiredPlacements = !!(template.validationRules.requiredPlacements && template.validationRules.requiredPlacements.length > 0);
+  const hasComponentCount = !!template.validationRules.componentCount && Object.keys(template.validationRules.componentCount!).length > 0;
 
-  if (useRequiredPlacements) {
-    // Validate specific component placements at exact positions
-    template.validationRules.requiredPlacements!.forEach(requirement => {
+  // Scoring weights: if both exist, split 50/50. If only one exists, give it 100.
+  const activePaths = (hasRequiredPlacements ? 1 : 0) + (hasComponentCount ? 1 : 0);
+  const placementMaxScore = hasRequiredPlacements ? (activePaths === 2 ? 50 : 100) : 0;
+  const countMaxScore = hasComponentCount ? (activePaths === 2 ? 50 : 100) : 0;
+
+  // 1) Validate specific placements (with tolerance)
+  if (hasRequiredPlacements) {
+    const placements = template.validationRules.requiredPlacements!;
+    const perItem = placements.length > 0 ? placementMaxScore / placements.length : 0;
+    placements.forEach(requirement => {
       const placedComponent = placedComponents.find(comp => comp.instanceId === requirement.nodeId);
-      
       if (!placedComponent) {
-        errors.push(`Missing ${requirement.expectedType} component at position ${requirement.nodeId}`);
-      } else if (placedComponent.type !== requirement.expectedType) {
-        errors.push(`Wrong component type at ${requirement.nodeId}: expected ${requirement.expectedType}, found ${placedComponent.type}`);
+        errors.push(`Missing ${requirement.expectedType} at ${requirement.nodeId}`);
+        return;
+      }
+      if (placedComponent.type !== requirement.expectedType) {
+        errors.push(`Wrong type at ${requirement.nodeId}: expected ${requirement.expectedType}, found ${placedComponent.type}`);
+        return;
+      }
+      // Check position within tolerance
+      const tolerance = 10;
+      const xMatch = Math.abs(placedComponent.x - requirement.position.x) <= tolerance;
+      const yMatch = Math.abs(placedComponent.y - requirement.position.y) <= tolerance;
+      if (xMatch && yMatch) {
+        score += perItem;
       } else {
-        // Check if component is placed at the correct position (with some tolerance)
-        const tolerance = 10; // Allow 10 pixel tolerance
-        const xMatch = Math.abs(placedComponent.x - requirement.position.x) <= tolerance;
-        const yMatch = Math.abs(placedComponent.y - requirement.position.y) <= tolerance;
-        
-        if (xMatch && yMatch) {
-          score += 100 / template.validationRules.requiredPlacements!.length; // Distribute points evenly
-        } else {
-          errors.push(`Component ${requirement.expectedType} at ${requirement.nodeId} is not positioned correctly`);
-        }
+        errors.push(`Incorrect position for ${requirement.nodeId}`);
       }
     });
-  } else {
-    // Use flexible component count validation
+  }
+
+  // 2) Validate component counts (flexible positions)
+  if (hasComponentCount) {
+    const countsRules = template.validationRules.componentCount!;
+    const keys = Object.keys(countsRules);
+    const perType = keys.length > 0 ? countMaxScore / keys.length : 0;
     const componentCounts = placedComponents.reduce((acc, comp) => {
       acc[comp.type] = (acc[comp.type] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    // Check against componentCount rules if they exist
-    if (template.validationRules.componentCount) {
-      Object.entries(template.validationRules.componentCount).forEach(([componentType, requiredCount]) => {
-        const actual = componentCounts[componentType] || 0;
-        if (actual < requiredCount) {
-          errors.push(`Missing ${requiredCount - actual} ${componentType} component(s)`);
-        } else if (actual === requiredCount) {
-          score += 100 / Object.keys(template.validationRules.componentCount!).length; // Distribute points evenly
-        } else if (actual > requiredCount) {
-          errors.push(`Too many ${componentType} components: expected ${requiredCount}, found ${actual}`);
-        }
-      });
-    } else {
-      // Fallback to requiredComponents if no validation rules exist
-      template.requiredComponents.forEach(req => {
-        const actual = componentCounts[req.type] || 0;
-        if (actual < req.count) {
-          errors.push(`Missing ${req.count - actual} ${req.type} component(s)`);
-        } else if (actual === req.count) {
-          score += 100 / template.requiredComponents.length; // Distribute points evenly
-        } else if (actual > req.count) {
-          errors.push(`Too many ${req.type} components: expected ${req.count}, found ${actual}`);
-        }
-      });
-    }
+    keys.forEach(componentType => {
+      const requiredCount = countsRules[componentType];
+      const actual = componentCounts[componentType] || 0;
+      if (actual < requiredCount) {
+        errors.push(`Missing ${requiredCount - actual} ${componentType} component(s)`);
+      } else if (actual === requiredCount) {
+        score += perType;
+      } else if (actual > requiredCount) {
+        errors.push(`Too many ${componentType} components: expected ${requiredCount}, found ${actual}`);
+      }
+    });
+  }
+
+  // 3) Fallback to requiredComponents if neither specific rules exist
+  if (!hasRequiredPlacements && !hasComponentCount) {
+    const componentCounts = placedComponents.reduce((acc, comp) => {
+      acc[comp.type] = (acc[comp.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    template.requiredComponents.forEach(req => {
+      const actual = componentCounts[req.type] || 0;
+      if (actual < req.count) {
+        errors.push(`Missing ${req.count - actual} ${req.type} component(s)`);
+      } else if (actual === req.count) {
+        score += 100 / template.requiredComponents.length;
+      } else if (actual > req.count) {
+        errors.push(`Too many ${req.type} components: expected ${req.count}, found ${actual}`);
+      }
+    });
   }
 
   return {
