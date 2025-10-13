@@ -130,6 +130,12 @@ export default function CircuitSchematic2D({
   
   // Helper function to calculate component rotation (angle between its two connected nodes)
   const calculateComponentRotation = (node: any): number => {
+    // Keep transistors in canonical orientation (base left, collector up, emitter down)
+    // because wiring uses fixed offsets for Q pins that assume no rotation.
+    // Applies to any node with id starting with 'Q' or explicitly placed as a transistor.
+    if (/^Q\d*/i.test(node.id) || placedComponents[node.id] === 'transistor') {
+      return 0;
+    }
     if (node.connections.length >= 2) {
       const n1 = template.targetTopology.find(n => n.id === node.connections[0]);
       const n2 = template.targetTopology.find(n => n.id === node.connections[1]);
@@ -405,38 +411,45 @@ export default function CircuitSchematic2D({
           // Calculate exact connection points based on component type and position
           let fromConnectionX: number, fromConnectionY: number, toConnectionX: number, toConnectionY: number;
           
-          // Helper function to get transistor connection point
-          const getTransistorConnectionPoint = (nodePos: {x: number, y: number}, connectedNodeId: string, connections: string[]) => {
-            const nodeX = (nodePos.x - 250) / 40;
-            const nodeY = (250 - nodePos.y) / 40;
-            
-            // Find the index of the connected node in the connections array
-            const connectionIndex = connections.indexOf(connectedNodeId);
-            
-            // For the transistor switch circuit: Q1 connections are ['Q1_C', 'GND', 'R2']
-            // Map these to the actual transistor pin positions:
-            // Q1_C (collector junction) -> collector (top): +0.3, +1
-            // GND (ground) -> emitter (bottom): +0.3, -1  
-            // R2 (base signal) -> base (left): -1, 0
-            
-            if (connectedNodeId === 'Q1_C') {
-              // Collector connection (top)
-              return { x: nodeX + 0.3, y: nodeY + 1 };
-            } else if (connectedNodeId === 'GND') {
-              // Emitter connection (bottom)
-              return { x: nodeX + 0.3, y: nodeY - 1 };
-            } else if (connectedNodeId === 'R2') {
-              // Base connection (left)
-              return { x: nodeX - 1, y: nodeY };
-            } else {
-              // Fallback to index-based positioning
-              if (connectionIndex === 0) {
-                return { x: nodeX + 0.3, y: nodeY + 1 };
-              } else if (connectionIndex === 1) {
-                return { x: nodeX + 0.3, y: nodeY - 1 };
+          // Helper: get exact connection point on a transistor (base/collector/emitter)
+          // Uses id hints (e.g., Q1_C, Q1_B, GND, R1/IN) and relative position of the other node.
+          const getTransistorConnectionPoint = (transistorNode: any, otherNode: any) => {
+            const tX = (transistorNode.position.x - 250) / 40;
+            const tY = (250 - transistorNode.position.y) / 40;
+            const otherId: string = otherNode.id || '';
+
+            // Prefer semantic id hints first
+            const isCollectorById = /(^|_)C$/i.test(otherId) || /_C/i.test(otherId) || otherId === `${transistorNode.id}_C` || otherId === 'Q1_C';
+            const isEmitterById = /GND/i.test(otherId) || /(^|_)E$/i.test(otherId);
+            const isBaseById = /(^|_)B$/i.test(otherId) || otherId === 'R1' || /^IN$/i.test(otherId);
+
+            let pin: 'collector' | 'emitter' | 'base' | null = null;
+            if (isCollectorById) pin = 'collector';
+            else if (isEmitterById) pin = 'emitter';
+            else if (isBaseById) pin = 'base';
+
+            // If no id hint, use relative position in template (screen coords where y increases downward)
+            if (!pin && otherNode && otherNode.position && transistorNode && transistorNode.position) {
+              const dyScreen = otherNode.position.y - transistorNode.position.y; // >0 means other is below transistor
+              const dxScreen = otherNode.position.x - transistorNode.position.x;
+              if (Math.abs(dyScreen) > Math.max(10, Math.abs(dxScreen))) {
+                pin = dyScreen < 0 ? 'collector' : 'emitter';
               } else {
-                return { x: nodeX - 1, y: nodeY };
+                // Mostly horizontal: assume base to the left by convention
+                pin = dxScreen < 0 ? 'base' : 'base';
               }
+            }
+
+            // Map pin to the fixed connection offsets of our symbol
+            const finalPin = pin || 'base';
+            switch (finalPin) {
+              case 'collector':
+                return { x: tX + 0.3, y: tY + 1, pin: finalPin } as const;
+              case 'emitter':
+                return { x: tX + 0.3, y: tY - 1, pin: finalPin } as const;
+              case 'base':
+              default:
+                return { x: tX - 1, y: tY, pin: finalPin } as const;
             }
           };
           
@@ -444,11 +457,14 @@ export default function CircuitSchematic2D({
           if (node.type === 'component') {
             // Check if this is a transistor by looking at placed components
             const nodeComponentType = placedComponents[node.id];
+            const isTransistorNode = /^Q\d*/i.test(node.id) || nodeComponentType === 'transistor';
             
-            if (nodeComponentType === 'transistor') {
-              const connectionPoint = getTransistorConnectionPoint(node.position, connectedId, node.connections);
+            if (isTransistorNode) {
+              const connectionPoint = getTransistorConnectionPoint(node, connectedNode);
               fromConnectionX = connectionPoint.x;
               fromConnectionY = connectionPoint.y;
+              // Attach pin info for routing preference
+              (node as any)._lastTransistorPin = connectionPoint.pin;
             } else {
               // Regular component - determine connection points based on rotation vector (supports arbitrary angles)
               const theta = calculateComponentRotation(node);
@@ -470,10 +486,12 @@ export default function CircuitSchematic2D({
           if (connectedNode.type === 'component') {
             // Check if connected node is a transistor
             const connectedComponentType = placedComponents[connectedNode.id];
-            if (connectedComponentType === 'transistor') {
-              const connectionPoint = getTransistorConnectionPoint(connectedNode.position, node.id, connectedNode.connections);
+            const isTransistorConnected = /^Q\d*/i.test(connectedNode.id) || connectedComponentType === 'transistor';
+            if (isTransistorConnected) {
+              const connectionPoint = getTransistorConnectionPoint(connectedNode, node);
               toConnectionX = connectionPoint.x;
               toConnectionY = connectionPoint.y;
+              (connectedNode as any)._lastTransistorPin = connectionPoint.pin;
             } else {
               // Regular component - determine connection points based on rotation vector (supports arbitrary angles)
               const theta = calculateComponentRotation(connectedNode);
@@ -492,60 +510,46 @@ export default function CircuitSchematic2D({
             toConnectionY = connectedY;
           }
           
-          // VIN terminals use L-shaped full routing; others use pin stubs
-          const isVinTerminal = (n: any) => n.type === 'terminal' && /^vin[+-]$/i.test(n.id);
-          const isVinConnection = isVinTerminal(node) || isVinTerminal(connectedNode);
-
-          if (isVinConnection) {
-            const dxAbs = Math.abs(fromConnectionX - toConnectionX);
-            const dyAbs = Math.abs(fromConnectionY - toConnectionY);
-            const useHorizontalFirst = dxAbs >= dyAbs;
-            const bendX = useHorizontalFirst ? toConnectionX : fromConnectionX;
-            const bendY = useHorizontalFirst ? fromConnectionY : toConnectionY;
-
-            return [
+          // Medium-8 uses straight wires; others use orthogonal L-shaped routing
+          if (template.id === 'medium-8') {
+            return (
               <SchematicWire
-                key={`${node.id}-${connectedId}-vin-seg1`}
+                key={`${node.id}-${connectedId}-straight`}
                 from={[fromConnectionX, fromConnectionY, 0]}
-                to={[bendX, bendY, 0]}
-                isDarkMode={isDarkMode}
-              />,
-              <SchematicWire
-                key={`${node.id}-${connectedId}-vin-seg2`}
-                from={[bendX, bendY, 0]}
                 to={[toConnectionX, toConnectionY, 0]}
                 isDarkMode={isDarkMode}
               />
-            ];
+            );
           }
 
-          // Draw short pin stubs at both endpoints instead of full wires
-          const stubs: React.ReactElement[] = [];
-          const dx = toConnectionX - fromConnectionX;
-          const dy = toConnectionY - fromConnectionY;
-          const len = Math.hypot(dx, dy) || 1;
-          const nx = dx / len;
-          const ny = dy / len;
-          const stubLen = 0.7;
+          const dxAbs = Math.abs(fromConnectionX - toConnectionX);
+          const dyAbs = Math.abs(fromConnectionY - toConnectionY);
+          // Prefer routing aligned with transistor leg when applicable
+          const fromPin = (node as any)._lastTransistorPin as ('collector'|'emitter'|'base'|undefined);
+          const toPin = (connectedNode as any)._lastTransistorPin as ('collector'|'emitter'|'base'|undefined);
+          let useHorizontalFirst = dxAbs >= dyAbs;
+          if (fromPin) {
+            useHorizontalFirst = fromPin === 'base';
+          } else if (toPin) {
+            useHorizontalFirst = toPin === 'base';
+          }
+          const bendX = useHorizontalFirst ? toConnectionX : fromConnectionX;
+          const bendY = useHorizontalFirst ? fromConnectionY : toConnectionY;
 
-          stubs.push(
+          return [
             <SchematicWire
-              key={`${node.id}-${connectedId}-stub1`}
+              key={`${node.id}-${connectedId}-seg1`}
               from={[fromConnectionX, fromConnectionY, 0]}
-              to={[fromConnectionX + nx * stubLen, fromConnectionY + ny * stubLen, 0]}
+              to={[bendX, bendY, 0]}
               isDarkMode={isDarkMode}
-            />
-          );
-          stubs.push(
+            />,
             <SchematicWire
-              key={`${node.id}-${connectedId}-stub2`}
-              from={[toConnectionX, toConnectionY, 0]}
-              to={[toConnectionX - nx * stubLen, toConnectionY - ny * stubLen, 0]}
+              key={`${node.id}-${connectedId}-seg2`}
+              from={[bendX, bendY, 0]}
+              to={[toConnectionX, toConnectionY, 0]}
               isDarkMode={isDarkMode}
             />
-          );
-
-          return stubs;
+          ];
         });
       }).flat().filter(Boolean)}
       

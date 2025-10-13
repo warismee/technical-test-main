@@ -821,6 +821,8 @@ function SchematicJunction({ position, isDarkMode = false }: { position: [number
 }
 
 function SchematicTerminal({ position, label, isDarkMode = false }: { position: [number, number, number]; label: string; isDarkMode?: boolean }) {
+  // Place VCC label above the terminal; others remain below
+  const labelYOffset = label === 'VCC' ? 0.4 : -0.4;
   return (
     <group position={position}>
       {/* Terminal connection point */}
@@ -830,7 +832,7 @@ function SchematicTerminal({ position, label, isDarkMode = false }: { position: 
       </mesh>
       {/* Terminal label */}
       <Text
-        position={[0, -0.4, 0]}
+        position={[0, labelYOffset, 0]}
         fontSize={0.2}
         color={isDarkMode ? "#ffffff" : "#333333"}
         anchorX="center"

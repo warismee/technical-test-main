@@ -378,22 +378,25 @@ export const circuitTemplates: CircuitTemplate[] = [
     name: 'Transistor Switch',
     description: 'Simple transistor switch circuit',
     requiredComponents: [
-      { type: 'R', count: 2 },
+    { type: 'R', count: 1 },
       { type: 'Q', count: 1 },
       { type: 'LED', count: 1 }
     ],
     targetTopology: [
-      { id: 'VCC', type: 'terminal', connections: ['R1'], position: { x: 200, y: 100 } },
-      { id: 'R1', type: 'component', connections: ['VCC', 'LED1'], position: { x: 200, y: 150 } },
-      { id: 'LED1', type: 'component', connections: ['R1', 'Q1_C'], position: { x: 200, y: 200 } },
-      { id: 'Q1_C', type: 'junction', connections: ['LED1', 'Q1'], position: { x: 200, y: 250 } },
-      { id: 'Q1', type: 'component', connections: ['Q1_C', 'GND', 'R2'], position: { x: 250, y: 300 } },
-      { id: 'R2', type: 'component', connections: ['Q1', 'IN'], position: { x: 150, y: 300 } },
-      { id: 'IN', type: 'terminal', connections: ['R2'], position: { x: 100, y: 300 } },
-      { id: 'GND', type: 'terminal', connections: ['Q1'], position: { x: 250, y: 400 } }
+  // Top chain: VCC -> LED1 -> Q1_C (collector junction) above the transistor
+  { id: 'VCC', type: 'terminal', connections: ['LED1'], position: { x: 332, y: 100 } },
+  { id: 'LED1', type: 'component', connections: ['VCC', 'Q1_C'], position: { x: 332, y: 160 } },
+  { id: 'Q1_C', type: 'junction', connections: ['LED1', 'Q1'], position: { x: 332, y: 220 } },
+  // Transistor centered; base fed from left via R1; emitter goes to GND
+  { id: 'Q1', type: 'component', connections: ['Q1_C', 'GND', 'R1'], position: { x: 320, y: 300 } },
+  // Left chain: IN -> R1 -> Q1 (base)
+  { id: 'IN', type: 'terminal', connections: ['R1'], position: { x: 100, y: 300 } },
+  { id: 'R1', type: 'component', connections: ['IN', 'Q1'], position: { x: 200, y: 300 } },
+  // Ground below transistor (emitter)
+  { id: 'GND', type: 'terminal', connections: ['Q1'], position: { x: 332, y: 450 } }
     ],
     validationRules: {
-      componentCount: {R:2,Q:1,LED:1}
+    componentCount: {R:1,Q:1,LED:1}
     }
   },
   {
