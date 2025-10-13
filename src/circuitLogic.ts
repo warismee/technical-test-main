@@ -737,31 +737,69 @@ export function validateCircuit(
   const errors: string[] = [];
   let score = 0;
 
-  // Check required components
-  const componentCounts = placedComponents.reduce((acc, comp) => {
-    acc[comp.type] = (acc[comp.type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  // Check if template uses requiredPlacements (specific positioning) or componentCount (flexible positioning)
+  const useRequiredPlacements = template.validationRules.requiredPlacements && template.validationRules.requiredPlacements.length > 0;
 
-  template.requiredComponents.forEach(req => {
-    const actual = componentCounts[req.type] || 0;
-    if (actual < req.count) {
-      errors.push(`Missing ${req.count - actual} ${req.type} component(s)`);
-    } else if (actual === req.count) {
-      score += 30; // Increased points for correct component count since it's the main validation
+  if (useRequiredPlacements) {
+    // Validate specific component placements at exact positions
+    template.validationRules.requiredPlacements!.forEach(requirement => {
+      const placedComponent = placedComponents.find(comp => comp.instanceId === requirement.nodeId);
+      
+      if (!placedComponent) {
+        errors.push(`Missing ${requirement.expectedType} component at position ${requirement.nodeId}`);
+      } else if (placedComponent.type !== requirement.expectedType) {
+        errors.push(`Wrong component type at ${requirement.nodeId}: expected ${requirement.expectedType}, found ${placedComponent.type}`);
+      } else {
+        // Check if component is placed at the correct position (with some tolerance)
+        const tolerance = 10; // Allow 10 pixel tolerance
+        const xMatch = Math.abs(placedComponent.x - requirement.position.x) <= tolerance;
+        const yMatch = Math.abs(placedComponent.y - requirement.position.y) <= tolerance;
+        
+        if (xMatch && yMatch) {
+          score += 100 / template.validationRules.requiredPlacements!.length; // Distribute points evenly
+        } else {
+          errors.push(`Component ${requirement.expectedType} at ${requirement.nodeId} is not positioned correctly`);
+        }
+      }
+    });
+  } else {
+    // Use flexible component count validation
+    const componentCounts = placedComponents.reduce((acc, comp) => {
+      acc[comp.type] = (acc[comp.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Check against componentCount rules if they exist
+    if (template.validationRules.componentCount) {
+      Object.entries(template.validationRules.componentCount).forEach(([componentType, requiredCount]) => {
+        const actual = componentCounts[componentType] || 0;
+        if (actual < requiredCount) {
+          errors.push(`Missing ${requiredCount - actual} ${componentType} component(s)`);
+        } else if (actual === requiredCount) {
+          score += 100 / Object.keys(template.validationRules.componentCount!).length; // Distribute points evenly
+        } else if (actual > requiredCount) {
+          errors.push(`Too many ${componentType} components: expected ${requiredCount}, found ${actual}`);
+        }
+      });
+    } else {
+      // Fallback to requiredComponents if no validation rules exist
+      template.requiredComponents.forEach(req => {
+        const actual = componentCounts[req.type] || 0;
+        if (actual < req.count) {
+          errors.push(`Missing ${req.count - actual} ${req.type} component(s)`);
+        } else if (actual === req.count) {
+          score += 100 / template.requiredComponents.length; // Distribute points evenly
+        } else if (actual > req.count) {
+          errors.push(`Too many ${req.type} components: expected ${req.count}, found ${actual}`);
+        }
+      });
     }
-  });
-
-  // Skip connection and circuit rules validation - only check component placement
-  // Give full score if all required components are placed correctly
-  if (errors.length === 0) {
-    score = 100; // Full score for correct component placement
   }
 
   return {
     isValid: errors.length === 0,
     errors,
-    score: Math.min(100, score)
+    score: Math.min(100, Math.round(score))
   };
 }
 
