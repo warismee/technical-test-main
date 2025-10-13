@@ -68,7 +68,10 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 400, y: 200 } }
     ],
     validationRules: {
-      componentCount: {R:1,C:1}
+      requiredPlacements: [
+        { nodeId: 'R1', expectedType: 'R', position: { x: 200, y: 200 } },
+        { nodeId: 'C1', expectedType: 'C', position: { x: 300, y: 200 } }
+      ]
     }
   },
   {
@@ -118,7 +121,7 @@ export const circuitTemplates: CircuitTemplate[] = [
       { type: 'S', count: 1 }
     ],
     targetTopology: [
-      { id: 'A', type: 'terminal', connections: ['S1'], position: { x: 100, y: 200 } },
+      { id: 'A', type: 'terminal', connections: ['S1'], position: { x: 50, y: 200 } },
       { id: 'S1', type: 'component', connections: ['A', 'R1'], position: { x: 150, y: 200 } },
       { id: 'R1', type: 'component', connections: ['S1', 'C1'], position: { x: 250, y: 200 } },
       { id: 'C1', type: 'component', connections: ['R1', 'B'], position: { x: 350, y: 200 } },
@@ -225,7 +228,10 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 400, y: 200 } }
     ],
     validationRules: {
-      componentCount: {R:1,C:1}
+        requiredPlacements: [
+        { nodeId: 'R1', expectedType: 'R', position: { x: 200, y: 200 } },
+        { nodeId: 'C1', expectedType: 'C', position: { x: 300, y: 200 } }
+      ]
     }
   },
   // MEDIUM CIRCUITS (10 total)
