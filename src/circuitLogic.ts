@@ -396,28 +396,12 @@ export const circuitTemplates: CircuitTemplate[] = [
   { id: 'GND', type: 'terminal', connections: ['Q1'], position: { x: 332, y: 450 } }
     ],
     validationRules: {
-    componentCount: {R:1,Q:1,LED:1}
-    }
-  },
-  {
-    id: 'medium-9',
-    difficulty: 'medium',
-    name: 'Loaded Voltage Divider',
-    description: 'Voltage divider with loading effect',
-    requiredComponents: [
-      { type: 'R', count: 3 }
-    ],
-    targetTopology: [
-      { id: 'A', type: 'terminal', connections: ['R1'], position: { x: 100, y: 150 } },
-      { id: 'R1', type: 'component', connections: ['A', 'J1'], position: { x: 200, y: 150 } },
-      { id: 'J1', type: 'junction', connections: ['R1', 'R2', 'R3'], position: { x: 300, y: 200 } },
-      { id: 'R2', type: 'component', connections: ['J1', 'B'], position: { x: 300, y: 300 } },
-      { id: 'R3', type: 'component', connections: ['J1', 'OUT'], position: { x: 400, y: 200 } },
-      { id: 'OUT', type: 'terminal', connections: ['R3'], position: { x: 500, y: 200 } },
-      { id: 'B', type: 'terminal', connections: ['R2'], position: { x: 300, y: 400 } }
-    ],
-    validationRules: {
-      componentCount: {R:3}
+    componentCount: {R:1,Q:1,LED:1},
+    requiredPlacements: [
+      { nodeId: 'R1', expectedType: 'R', position: { x: 200, y: 300 } },
+      { nodeId: 'Q1', expectedType: 'Q', position: { x: 320, y: 300 } },
+      { nodeId: 'LED1', expectedType: 'LED', position: { x: 332, y: 160 } }
+    ]
     }
   },
   {
@@ -438,7 +422,11 @@ export const circuitTemplates: CircuitTemplate[] = [
       { id: 'GND', type: 'terminal', connections: ['C1'], position: { x: 300, y: 400 } }
     ],
     validationRules: {
-      componentCount: {R:1,C:1}
+          componentCount: {R:1,C:1},
+          requiredPlacements: [
+            { nodeId: 'R1', expectedType: 'R', position: { x: 200, y: 200 } },
+            { nodeId: 'C1', expectedType: 'C', position: { x: 300, y: 300 } }
+          ]
     }
   },
   // HARD CIRCUITS (10 total)
