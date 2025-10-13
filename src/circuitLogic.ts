@@ -323,28 +323,6 @@ export const circuitTemplates: CircuitTemplate[] = [
     }
   },
   {
-    id: 'medium-5',
-    difficulty: 'medium',
-    name: 'Resistor Network',
-    description: 'Complex resistor network with junction nodes',
-    requiredComponents: [
-      { type: 'R', count: 4 }
-    ],
-    targetTopology: [
-      { id: 'A', type: 'terminal', connections: ['R1'], position: { x: 100, y: 200 } },
-      { id: 'R1', type: 'component', connections: ['A', 'J1'], position: { x: 180, y: 200 } },
-      { id: 'J1', type: 'junction', connections: ['R1', 'R2', 'R3'], position: { x: 260, y: 200 } },
-      { id: 'R2', type: 'component', connections: ['J1', 'J2'], position: { x: 340, y: 150 } },
-      { id: 'R3', type: 'component', connections: ['J1', 'J2'], position: { x: 340, y: 250 } },
-      { id: 'J2', type: 'junction', connections: ['R2', 'R3', 'R4'], position: { x: 420, y: 200 } },
-      { id: 'R4', type: 'component', connections: ['J2', 'B'], position: { x: 500, y: 200 } },
-      { id: 'B', type: 'terminal', connections: ['R4'], position: { x: 580, y: 200 } }
-    ],
-    validationRules: {
-      componentCount: {R:4}
-    }
-  },
-  {
     id: 'medium-6',
     difficulty: 'medium',
     name: 'Wheatstone Bridge',
@@ -353,14 +331,22 @@ export const circuitTemplates: CircuitTemplate[] = [
       { type: 'R', count: 4 }
     ],
     targetTopology: [
-      { id: 'A', type: 'terminal', connections: ['R1', 'R2'], position: { x: 200, y: 100 } },
-      { id: 'R1', type: 'component', connections: ['A', 'C'], position: { x: 100, y: 150 } },
-      { id: 'R2', type: 'component', connections: ['A', 'D'], position: { x: 300, y: 150 } },
-      { id: 'C', type: 'terminal', connections: ['R1', 'R3'], position: { x: 100, y: 250 } },
-      { id: 'D', type: 'terminal', connections: ['R2', 'R4'], position: { x: 300, y: 250 } },
-      { id: 'R3', type: 'component', connections: ['C', 'B'], position: { x: 150, y: 300 } },
-      { id: 'R4', type: 'component', connections: ['D', 'B'], position: { x: 250, y: 300 } },
-      { id: 'B', type: 'terminal', connections: ['R3', 'R4'], position: { x: 200, y: 350 } }
+  // Diamond layout: left (A), right (B), top (C), bottom (D)
+  // Corners as junctions to allow VIN/VOUT terminals
+  { id: 'A', type: 'junction', connections: ['R1', 'R2', 'VOUT-'], position: { x: 150, y: 200 } },
+  { id: 'B', type: 'junction', connections: ['R3', 'R4', 'VOUT+'], position: { x: 350, y: 200 } },
+  { id: 'C', type: 'junction', connections: ['R1', 'R3', 'VIN+'], position: { x: 250, y: 100 } },
+  { id: 'D', type: 'junction', connections: ['R2', 'R4', 'VIN-'], position: { x: 250, y: 300 } },
+  // Edge resistors positioned at midpoints of diamond edges (45° orientation)
+  { id: 'R1', type: 'component', connections: ['A', 'C'], position: { x: 200, y: 150 } },
+  { id: 'R2', type: 'component', connections: ['A', 'D'], position: { x: 200, y: 250 } },
+  { id: 'R3', type: 'component', connections: ['C', 'B'], position: { x: 300, y: 150 } },
+  { id: 'R4', type: 'component', connections: ['D', 'B'], position: { x: 300, y: 250 } },
+  // Terminals for VIN at top/bottom and VOUT inside diamond near center line
+  { id: 'VIN+', type: 'terminal', connections: ['C'], position: { x: 250, y: 60 } },
+  { id: 'VIN-', type: 'terminal', connections: ['D'], position: { x: 250, y: 340 } },
+  { id: 'VOUT-', type: 'terminal', connections: ['A'], position: { x: 220, y: 200 } },
+  { id: 'VOUT+', type: 'terminal', connections: ['B'], position: { x: 280, y: 200 } }
     ],
     validationRules: {
       componentCount: {R:4}

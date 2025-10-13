@@ -128,23 +128,19 @@ export default function CircuitSchematic2D({
   // State to track which slots have been clicked/selected
   const [clickedSlots, setClickedSlots] = useState<{[nodeId: string]: boolean}>({});
   
-  // Helper function to calculate component rotation
+  // Helper function to calculate component rotation (angle between its two connected nodes)
   const calculateComponentRotation = (node: any): number => {
     if (node.connections.length >= 2) {
-      const connection1 = template.targetTopology.find(n => n.id === node.connections[0]);
-      const connection2 = template.targetTopology.find(n => n.id === node.connections[1]);
-      
-      if (connection1 && connection2) {
-        const dx = connection2.position.x - connection1.position.x;
-        const dy = connection2.position.y - connection1.position.y;
-        
-        // If the component is more vertical than horizontal, rotate it 90 degrees
-        if (Math.abs(dy) > Math.abs(dx)) {
-          return Math.PI / 2; // 90 degrees for vertical orientation
-        }
+      const n1 = template.targetTopology.find(n => n.id === node.connections[0]);
+      const n2 = template.targetTopology.find(n => n.id === node.connections[1]);
+      if (n1 && n2) {
+  const dx = (n2.position.x - n1.position.x);
+  const dy = (n2.position.y - n1.position.y);
+  // Screen Y increases downward; invert dy for 3D world where Y increases upward
+  return Math.atan2(-dy, dx);
       }
     }
-    return 0; // 0 degrees for horizontal orientation
+    return 0;
   };
   
   const handleSlotClick = (nodeId: string) => {
@@ -454,18 +450,16 @@ export default function CircuitSchematic2D({
               fromConnectionX = connectionPoint.x;
               fromConnectionY = connectionPoint.y;
             } else {
-              // Regular component - determine connection points based on rotation and relative position
-              const componentRotation = calculateComponentRotation(node);
-              
-              if (componentRotation > 0) {
-                // Vertical component - connect to top (+1) or bottom (-1) edge
-                fromConnectionX = nodeX;
-                fromConnectionY = nodeY + (connectedY > nodeY ? 1 : -1);
-              } else {
-                // Horizontal component - connect to left (-1) or right (+1) edge
-                fromConnectionX = nodeX + (connectedX > nodeX ? 1 : -1);
-                fromConnectionY = nodeY;
-              }
+              // Regular component - determine connection points based on rotation vector (supports arbitrary angles)
+              const theta = calculateComponentRotation(node);
+              const dirX = Math.cos(theta);
+              const dirY = Math.sin(theta);
+              const vecX = connectedX - nodeX;
+              const vecY = connectedY - nodeY;
+              const dot = vecX * dirX + vecY * dirY;
+              const sign = dot >= 0 ? 1 : -1;
+              fromConnectionX = nodeX + sign * dirX;
+              fromConnectionY = nodeY + sign * dirY;
             }
           } else {
             // Terminals connect from center
@@ -481,18 +475,16 @@ export default function CircuitSchematic2D({
               toConnectionX = connectionPoint.x;
               toConnectionY = connectionPoint.y;
             } else {
-              // Regular component - determine connection points based on rotation and relative position
-              const connectedComponentRotation = calculateComponentRotation(connectedNode);
-              
-              if (connectedComponentRotation > 0) {
-                // Vertical component - connect to top (+1) or bottom (-1) edge
-                toConnectionX = connectedX;
-                toConnectionY = connectedY + (nodeY > connectedY ? 1 : -1);
-              } else {
-                // Horizontal component - connect to left (-1) or right (+1) edge  
-                toConnectionX = connectedX + (nodeX > connectedX ? 1 : -1);
-                toConnectionY = connectedY;
-              }
+              // Regular component - determine connection points based on rotation vector (supports arbitrary angles)
+              const theta = calculateComponentRotation(connectedNode);
+              const dirX = Math.cos(theta);
+              const dirY = Math.sin(theta);
+              const vecX = nodeX - connectedX;
+              const vecY = nodeY - connectedY;
+              const dot = vecX * dirX + vecY * dirY;
+              const sign = dot >= 0 ? 1 : -1;
+              toConnectionX = connectedX + sign * dirX;
+              toConnectionY = connectedY + sign * dirY;
             }
           } else {
             // Terminals connect to center
@@ -500,55 +492,60 @@ export default function CircuitSchematic2D({
             toConnectionY = connectedY;
           }
           
-          // Create right-angled wires (horizontal + vertical segments)
-          const wires = [];
-          
-          if (Math.abs(fromConnectionX - toConnectionX) > 0.1 && Math.abs(fromConnectionY - toConnectionY) > 0.1) {
-            // Need L-shaped connection: horizontal then vertical
-            const midX = (fromConnectionX + toConnectionX) / 2;
-            
-            // Horizontal segment from start
-            wires.push(
+          // VIN terminals use L-shaped full routing; others use pin stubs
+          const isVinTerminal = (n: any) => n.type === 'terminal' && /^vin[+-]$/i.test(n.id);
+          const isVinConnection = isVinTerminal(node) || isVinTerminal(connectedNode);
+
+          if (isVinConnection) {
+            const dxAbs = Math.abs(fromConnectionX - toConnectionX);
+            const dyAbs = Math.abs(fromConnectionY - toConnectionY);
+            const useHorizontalFirst = dxAbs >= dyAbs;
+            const bendX = useHorizontalFirst ? toConnectionX : fromConnectionX;
+            const bendY = useHorizontalFirst ? fromConnectionY : toConnectionY;
+
+            return [
               <SchematicWire
-                key={`${node.id}-${connectedId}-h1`}
+                key={`${node.id}-${connectedId}-vin-seg1`}
                 from={[fromConnectionX, fromConnectionY, 0]}
-                to={[midX, fromConnectionY, 0]}
+                to={[bendX, bendY, 0]}
                 isDarkMode={isDarkMode}
-              />
-            );
-            
-            // Vertical segment
-            wires.push(
+              />,
               <SchematicWire
-                key={`${node.id}-${connectedId}-v`}
-                from={[midX, fromConnectionY, 0]}
-                to={[midX, toConnectionY, 0]}
-                isDarkMode={isDarkMode}
-              />
-            );
-            
-            // Final horizontal segment to destination
-            wires.push(
-              <SchematicWire
-                key={`${node.id}-${connectedId}-h2`}
-                from={[midX, toConnectionY, 0]}
+                key={`${node.id}-${connectedId}-vin-seg2`}
+                from={[bendX, bendY, 0]}
                 to={[toConnectionX, toConnectionY, 0]}
                 isDarkMode={isDarkMode}
               />
-            );
-          } else {
-            // Simple straight connection (horizontal or vertical)
-            wires.push(
-              <SchematicWire
-                key={`${node.id}-${connectedId}`}
-                from={[fromConnectionX, fromConnectionY, 0]}
-                to={[toConnectionX, toConnectionY, 0]}
-                isDarkMode={isDarkMode}
-              />
-            );
+            ];
           }
-          
-          return wires;
+
+          // Draw short pin stubs at both endpoints instead of full wires
+          const stubs: React.ReactElement[] = [];
+          const dx = toConnectionX - fromConnectionX;
+          const dy = toConnectionY - fromConnectionY;
+          const len = Math.hypot(dx, dy) || 1;
+          const nx = dx / len;
+          const ny = dy / len;
+          const stubLen = 0.7;
+
+          stubs.push(
+            <SchematicWire
+              key={`${node.id}-${connectedId}-stub1`}
+              from={[fromConnectionX, fromConnectionY, 0]}
+              to={[fromConnectionX + nx * stubLen, fromConnectionY + ny * stubLen, 0]}
+              isDarkMode={isDarkMode}
+            />
+          );
+          stubs.push(
+            <SchematicWire
+              key={`${node.id}-${connectedId}-stub2`}
+              from={[toConnectionX, toConnectionY, 0]}
+              to={[toConnectionX - nx * stubLen, toConnectionY - ny * stubLen, 0]}
+              isDarkMode={isDarkMode}
+            />
+          );
+
+          return stubs;
         });
       }).flat().filter(Boolean)}
       
