@@ -808,7 +808,7 @@ function SchematicIC({ position, label, isDarkMode = false, rotation = 0 }: Sche
   );
 }
 
-function SchematicJunction({ position, isDarkMode = false }: { position: [number, number, number]; isDarkMode?: boolean }) {
+function SchematicJunction({ position, label, isDarkMode = false }: { position: [number, number, number]; label?: string; isDarkMode?: boolean }) {
   return (
     <group position={position}>
       {/* Junction connection point */}
@@ -816,6 +816,18 @@ function SchematicJunction({ position, isDarkMode = false }: { position: [number
         <circleGeometry args={[0.08, 16]} />
         <meshBasicMaterial color={isDarkMode ? "#ffffff" : "#333333"} />
       </mesh>
+      {/* Optional debug label */}
+      {label && (
+        <Text
+          position={[0, -0.35, 0]}
+          fontSize={0.18}
+          color={isDarkMode ? "#ffffff" : "#333333"}
+          anchorX="center"
+          anchorY="middle"
+        >
+          {label}
+        </Text>
+      )}
     </group>
   );
 }

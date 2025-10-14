@@ -244,11 +244,12 @@ export default function CircuitSchematic2D({
           );
         }
         
-        if (node.type === 'junction') {
+    if (node.type === 'junction') {
           return (
             <SchematicJunction 
               key={node.id}
               position={position}
+      label={['J1','J2','J3'].includes(node.id) ? node.id : undefined}
               isDarkMode={isDarkMode}
             />
           );
@@ -570,11 +571,23 @@ export default function CircuitSchematic2D({
           let bendX: number;
           let bendY: number;
 
+          const isHard8 = template.id === 'hard-8';
+          const isInToJout =
+            (node.id === 'IN-' && connectedId === 'J_OUT') ||
+            (node.id === 'J_OUT' && connectedId === 'IN-');
+
           if (isHard10 && involvesVCC) {
             const vccX = node.id === 'VCC' ? fromConnectionX : toConnectionX;
             const otherY = node.id === 'VCC' ? toConnectionY : fromConnectionY;
             bendX = vccX;
             bendY = otherY;
+          } else if (isHard8 && isInToJout) {
+            // For hard-8, force L-shape from IN- to J_OUT: horizontal from IN- then vertical at J_OUT.x
+            // Choose elbow at (J_OUT.x, IN-.y)
+            const jOutX = node.id === 'J_OUT' ? fromConnectionX : toConnectionX;
+            const inMinusY = node.id === 'IN-' ? fromConnectionY : toConnectionY;
+            bendX = jOutX;
+            bendY = inMinusY;
           } else if (fromIsJunction || toIsJunction) {
             const junctionX = toIsJunction ? toConnectionX : fromConnectionX;
             bendX = junctionX;

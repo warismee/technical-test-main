@@ -436,38 +436,7 @@ export const circuitTemplates: CircuitTemplate[] = [
           ]
     }
   },
-  // HARD CIRCUITS (10 total)
-  {
-    id: 'hard-4',
-    difficulty: 'hard',
-    name: 'Transistor Amplifier',
-    description: 'Advanced transistor amplifier circuit',
-    requiredComponents: [
-      { type: 'R', count: 4 },
-      { type: 'C', count: 2 },
-      { type: 'Q', count: 1 }
-    ],
-    targetTopology: [
-      { id: 'VCC', type: 'terminal', connections: ['R1', 'R2'], position: { x: 300, y: 50 } },
-      { id: 'R1', type: 'component', connections: ['VCC', 'Q1_B'], position: { x: 200, y: 100 } },
-      { id: 'R2', type: 'component', connections: ['VCC', 'Q1_C'], position: { x: 400, y: 100 } },
-      { id: 'Q1_B', type: 'junction', connections: ['R1', 'C1', 'R3'], position: { x: 200, y: 200 } },
-      { id: 'Q1_C', type: 'junction', connections: ['R2', 'Q1', 'C2'], position: { x: 400, y: 200 } },
-      { id: 'Q1', type: 'component', connections: ['Q1_B', 'Q1_C', 'R4'], position: { x: 300, y: 250 } },
-      { id: 'C1', type: 'component', connections: ['Q1_B', 'IN'], position: { x: 100, y: 200 } },
-      { id: 'C2', type: 'component', connections: ['Q1_C', 'OUT'], position: { x: 500, y: 200 } },
-      { id: 'R3', type: 'component', connections: ['Q1_B', 'GND'], position: { x: 200, y: 350 } },
-      { id: 'R4', type: 'component', connections: ['Q1', 'GND'], position: { x: 300, y: 350 } },
-      { id: 'IN', type: 'terminal', connections: ['C1'], position: { x: 50, y: 200 } },
-      { id: 'OUT', type: 'terminal', connections: ['C2'], position: { x: 550, y: 200 } },
-      { id: 'GND', type: 'terminal', connections: ['R3', 'R4'], position: { x: 250, y: 400 } }
-    ],
-    validationRules: {
-      componentCount: { R: 4, C: 2, Q: 1 }
-    }
-  },
-
-
+//Hard
   {
     id: 'hard-8',
     difficulty: 'hard',
@@ -475,25 +444,45 @@ export const circuitTemplates: CircuitTemplate[] = [
     description: 'RC oscillator circuit with feedback',
     requiredComponents: [
       { type: 'R', count: 3 },
-      { type: 'C', count: 2 },
+  { type: 'C', count: 3 },
       { type: 'OP', count: 1 }
     ],
-    targetTopology: [
-      { id: 'VCC', type: 'terminal', connections: ['OP1'], position: { x: 300, y: 50 } },
-      { id: 'OP1', type: 'component', connections: ['VCC', 'R1', 'R2', 'J1'], position: { x: 300, y: 150 } },
-      { id: 'R1', type: 'component', connections: ['OP1', 'C1'], position: { x: 200, y: 200 } },
-      { id: 'C1', type: 'component', connections: ['R1', 'J2'], position: { x: 150, y: 250 } },
-      { id: 'J2', type: 'junction', connections: ['C1', 'R2', 'C2'], position: { x: 200, y: 300 } },
-      { id: 'R2', type: 'component', connections: ['J2', 'OP1'], position: { x: 250, y: 250 } },
-      { id: 'C2', type: 'component', connections: ['J2', 'J3'], position: { x: 300, y: 350 } },
-      { id: 'J3', type: 'junction', connections: ['C2', 'R3'], position: { x: 400, y: 350 } },
-      { id: 'J1', type: 'junction', connections: ['OP1', 'OUT'], position: { x: 400, y: 150 } },
-      { id: 'R3', type: 'component', connections: ['J3', 'J1'], position: { x: 450, y: 250 } },
-      { id: 'OUT', type: 'terminal', connections: ['J1'], position: { x: 500, y: 150 } },
-      { id: 'GND', type: 'terminal', connections: ['OP1'], position: { x: 300, y: 400 } }
-    ],
+  targetTopology: [
+    // Power terminals
+//   { id: 'VCC', type: 'terminal', connections: ['J_VP'], position: { x: 480, y: 50 } },
+  { id: 'GND', type: 'terminal', connections: ['J_VM', 'R3','R1','R2'], position: { x: 440, y: 330 } },
+
+  // Amplifier (Op-Amp)
+  { id: 'OP1', type: 'component', connections: [], position: { x: 480, y: 200 }, fixedRotation: 0 },
+
+  // Output node (front)
+  { id: 'J_OUT', type: 'junction', connections: ['OP1', 'OUT'], position: { x: 540, y: 200 } },
+  { id: 'OUT', type: 'terminal', connections: ['J_OUT'], position: { x: 600, y: 200 } },
+
+  // Back power pins (vertical)
+  { id: 'J_VP', type: 'junction', connections: ['J1'], position: { x: 440, y: 192 } },
+  { id: 'J_VM', type: 'junction', connections: ['GND'], position: { x: 440, y: 208 } },
+
+    // Feedback path
+    { id: 'IN-', type: 'junction', connections: ['C3','J_OUT'], position: { x: 50, y: 50 } },
+
+    // 3-stage RC phase-lead network (left side)
+  { id: 'C1', type: 'component', connections: ['J1','J2'], position: { x: 330, y: 192 }, fixedRotation: 0 },
+    { id: 'R1', type: 'component', connections: ['J1','GND'], position: { x: 380, y: 280 }, fixedRotation: 1.5708 },
+
+    { id: 'C2', type: 'component', connections: ['J2','J3'], position: { x: 200, y: 192 }, fixedRotation: 0 },
+    { id: 'R2', type: 'component', connections: ['J3','GND'], position: { x: 250, y: 280 }, fixedRotation: 1.5708 },
+
+    { id: 'C3', type: 'component', connections: ['J3','IN-',], position: { x: 90, y: 192 }, fixedRotation: 0 },
+    { id: 'R3', type: 'component', connections: ['GND'], position: { x: 150, y: 280 }, fixedRotation: 1.5708 },
+
+    // Junctions connecting RC stages
+    { id: 'J1', type: 'junction', connections: ['C1', 'R1','J_VP'], position: { x: 380, y: 192 } },
+    { id: 'J2', type: 'junction', connections: ['C1', 'C2', 'R2'], position: { x: 250, y: 192 } },
+    { id: 'J3', type: 'junction', connections: ['C3', 'R3'], position: { x: 150, y: 192 } }
+  ],
     validationRules: {
-      componentCount: { R: 3, C: 1, OP: 1 }
+  componentCount: { R: 3, C: 3, OP: 1 }
     }
   },
   {
