@@ -1,6 +1,7 @@
 import * as React from "react";
 import { CircuitTemplate } from "./circuitLogic";
 import type { Mission } from "./missionEngine";
+import { getMissionForTemplate } from "./missionEngine";
 import { MdHome, MdLightMode, MdDarkMode, MdCheck } from "react-icons/md";
 
 interface CircuitUIOverlayProps {
@@ -253,6 +254,7 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
   const symbolColor = isDarkMode ? "#ffffff" : "#333333";
   let components = getComponentsFromTemplate(currentTemplate, symbolColor);
   // Derive mission-driven props when a mission object is provided
+  const missionToShow = mission ?? getMissionForTemplate(currentTemplate as any) ?? undefined;
   const derivedAllowedComponents = mission?.allowedComponents ?? allowedComponents;
   const filterTypes = derivedAllowedComponents?.map((c) => c.type) ?? allowedComponentTypes;
   if (filterTypes && filterTypes.length > 0) {
@@ -324,21 +326,21 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
           </div>
         )}
         {/* Mission goal status: show target and predicted values for certain mission kinds */}
-        {mission && (
+    {missionToShow && (
           <div className={`mt-2 text-xs ${textColor}`}>
-            {mission.goal.kind === 'voltage-threshold' && (
+      {missionToShow.goal.kind === 'voltage-threshold' && (
               <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded p-2`}>
                 <div className="font-medium mb-1">Goal: Voltage Threshold</div>
-                <div>Target: V({mission.goal.params.node}) ≥ {mission.goal.params.minVoltage.toFixed(2)} V{mission.goal.params.supply ? ` (supply ${mission.goal.params.supply} V)` : ''}</div>
+        <div>Target: V({missionToShow.goal.params.node}) ≥ {missionToShow.goal.params.minVoltage.toFixed(2)} V{missionToShow.goal.params.supply ? ` (supply ${missionToShow.goal.params.supply} V)` : ''}</div>
                 {(() => {
                   const vals = missionValues || {};
                   const R1 = typeof vals['R1'] === 'number' ? vals['R1'] : undefined;
                   const R2 = typeof vals['R2'] === 'number' ? vals['R2'] : undefined;
                   if (R1 != null && R2 != null) {
                     const scale = missionUnits === 'kOhm' ? 1000 : 1;
-                    const supply = mission.goal.params.supply ?? 5;
+          const supply = missionToShow.goal.params.supply ?? 5;
                     const vout = supply * ((R2 * scale) / ((R1 * scale) + (R2 * scale)));
-                    const pass = vout >= mission.goal.params.minVoltage;
+          const pass = vout >= missionToShow.goal.params.minVoltage;
                     return (
                       <div className="mt-1">Predicted: <span className={pass ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>{vout.toFixed(2)} V</span></div>
                     );
@@ -347,22 +349,22 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
                 })()}
               </div>
             )}
-            {mission.goal.kind === 'led-current-target' && (
+      {missionToShow.goal.kind === 'led-current-target' && (
               <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded p-2`}>
                 <div className="font-medium mb-1">Goal: LED Current Target</div>
-                <div>Target: {mission.goal.params.targetCurrent_mA} mA ± {(mission.goal.params.tolerance_mA ?? 2)} mA</div>
-                <div>Supply: {mission.goal.params.supply} V, Vf≈{mission.goal.params.vf ?? 2.0} V</div>
+        <div>Target: {missionToShow.goal.params.targetCurrent_mA} mA ± {(missionToShow.goal.params.tolerance_mA ?? 2)} mA</div>
+        <div>Supply: {missionToShow.goal.params.supply} V, Vf≈{missionToShow.goal.params.vf ?? 2.0} V</div>
                 {(() => {
                   const vals = missionValues || {};
                   const R1 = typeof vals['R1'] === 'number' ? vals['R1'] : undefined;
                   if (R1 != null) {
                     const scale = missionUnits === 'kOhm' ? 1000 : 1;
                     const R = Math.max(1e-3, R1 * scale);
-                    const Vs = mission.goal.params.supply;
-                    const Vf = mission.goal.params.vf ?? 2.0;
+          const Vs = missionToShow.goal.params.supply;
+          const Vf = missionToShow.goal.params.vf ?? 2.0;
                     const I_mA = Math.max(0, ((Vs - Vf) / R) * 1000);
-                    const target = mission.goal.params.targetCurrent_mA;
-                    const tol = mission.goal.params.tolerance_mA ?? 2;
+          const target = missionToShow.goal.params.targetCurrent_mA;
+          const tol = missionToShow.goal.params.tolerance_mA ?? 2;
                     const pass = Math.abs(I_mA - target) <= tol;
                     return (
                       <div className="mt-1">Predicted: <span className={pass ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>{I_mA.toFixed(1)} mA</span></div>
@@ -372,32 +374,42 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
                 })()}
               </div>
             )}
-            {mission.goal.kind === 'rlc-resonance-target' && (
+      {missionToShow.goal.kind === 'dtl-output-target' && (
               <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded p-2`}>
-                <div className="font-medium mb-1">Goal: RLC Resonance</div>
-                <div>Target: {Math.round(mission.goal.params.targetFrequencyHz)} Hz ± {Math.round(mission.goal.params.toleranceHz ?? Math.max(1, mission.goal.params.targetFrequencyHz * 0.1))} Hz</div>
+                <div className="font-medium mb-1">Goal: DTL Output</div>
+                <div>
+          Target: {missionToShow.goal.params.target} at OUT {' '}
+          {missionToShow.goal.params.target === 'HIGH'
+          ? `(≥ ${(missionToShow.goal.params.minHighV ?? 4.0).toFixed(2)} V)`
+          : `(≤ ${(missionToShow.goal.params.maxLowV ?? 0.5).toFixed(2)} V)`}
+                </div>
                 {(() => {
                   const vals = missionValues || {};
-                  const LmH = typeof vals['L'] === 'number' ? vals['L'] : (typeof vals['L1'] === 'number' ? vals['L1'] : undefined);
-                  const CuF = typeof vals['C'] === 'number' ? vals['C'] : (typeof vals['C1'] === 'number' ? vals['C1'] : undefined);
-                  if (LmH != null && CuF != null) {
-                    const L_H = Math.max(1e-12, LmH * 1e-3);
-                    const C_F = Math.max(1e-12, CuF * 1e-6);
-                    const f0 = 1 / (2 * Math.PI * Math.sqrt(L_H * C_F));
-                    const target = mission.goal.params.targetFrequencyHz;
-                    const tol = mission.goal.params.toleranceHz ?? Math.max(1, target * 0.1);
-                    const pass = Math.abs(f0 - target) <= tol;
-                    const fmt = (hz: number) => {
-                      if (hz >= 1000) return `${(hz/1000).toFixed(2)} kHz`;
-                      return `${hz.toFixed(0)} Hz`;
-                    };
+                  const R1v = typeof vals['R1'] === 'number' ? vals['R1'] : undefined;
+                  const R2v = typeof vals['R2'] === 'number' ? vals['R2'] : undefined;
+                  if (R1v != null && R2v != null) {
+                    const scale = missionUnits === 'kOhm' ? 1000 : 1;
+          const supply = (missionToShow.goal.params as any).supply ?? 5;
+          const vbeOn = (missionToShow.goal.params as any).vbeOn ?? 0.7;
+                    const R1 = Math.max(1e-3, R1v * scale);
+                    const R2 = Math.max(1e-3, R2v * scale);
+                    // Simple heuristic: inputs HIGH; base sees R1 to VCC and Rbe to GND
+                    const Rbe = 50000; // 50 kΩ effective base-emitter resistance
+                    const Vb = supply * (Rbe / (R1 + Rbe));
+                    const slope = 0.5;
+                    const k = Math.min(1, Math.max(0, (Vb - vbeOn) / slope));
+                    const RceOn = 100;
+                    const RceOff = 1e9;
+                    const RceEff = 1 / ((k / RceOn) + ((1 - k) / RceOff));
+                    const outV = supply * (RceEff / (R2 + RceEff));
+          const minHigh = (missionToShow.goal.params as any).minHighV ?? 0.8 * supply;
+          const maxLow = (missionToShow.goal.params as any).maxLowV ?? 0.5;
+          const pass = (missionToShow.goal.params as any).target === 'HIGH' ? outV >= minHigh : outV <= maxLow;
                     return (
-                      <div className="mt-1">Predicted: <span className={pass ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>{fmt(f0)}</span></div>
+                      <div className="mt-1">Predicted OUT: <span className={pass ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>{outV.toFixed(2)} V</span></div>
                     );
                   }
-                  return (
-                    <div className="mt-1 opacity-75">Set L (mH) and C (µF) in Component Properties to see predicted f₀.</div>
-                  );
+                  return null;
                 })()}
               </div>
             )}

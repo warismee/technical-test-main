@@ -689,6 +689,18 @@ export const Block: React.FC<BlockProps> = ({
     setIsDarkMode(!isDarkMode);
   };
 
+  // Ensure defaults for DTL mission controls so prediction shows up
+  React.useEffect(() => {
+    if (!activeTemplate) return;
+    const m = activeMissionId ? getMissionById(activeMissionId) : getMissionForTemplate(activeTemplate);
+    if (m && m.goal.kind === 'dtl-output-target') {
+      setMissionComponentValues((prev) => ({
+        R1: prev['R1'] ?? 100,
+        R2: prev['R2'] ?? 100,
+      }));
+    }
+  }, [activeMissionId, activeTemplate]);
+
   // Dynamic theme and background based on dark mode
   const currentTheme = isDarkMode ? "dark" : "light";
   const backgroundColor = isDarkMode ? "#111" : "#fafafa";
@@ -772,6 +784,12 @@ export const Block: React.FC<BlockProps> = ({
                     { id: 'R', label: 'R', unit: 'kΩ', value: missionComponentValues['R'] ?? 1, min: 0.001, max: 1000, step: 0.1 },
                     { id: 'L', label: 'L', unit: 'mH', value: missionComponentValues['L'] ?? 10, min: 0.001, max: 1000, step: 0.1 },
                     { id: 'C', label: 'C', unit: 'µF', value: missionComponentValues['C'] ?? 1, min: 0.001, max: 1000, step: 0.1 },
+                  ];
+                }
+                if (m.id === 'mission-dtl-1' || m.goal.kind === 'dtl-output-target') {
+                  return [
+                    { id: 'R1', label: 'R1 (base bias)', unit: 'kΩ', value: missionComponentValues['R1'] ?? 100, min: 0.001, max: 1000, step: 0.1 },
+                    { id: 'R2', label: 'R2 (collector pull-up)', unit: 'kΩ', value: missionComponentValues['R2'] ?? 100, min: 0.001, max: 1000, step: 0.1 },
                   ];
                 }
                 return undefined;

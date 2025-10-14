@@ -16,7 +16,8 @@ export type GoalKind =
   | "make-led-bright" // Ensure LED turns on (proxy by heuristic)
   | "component-efficiency" // Reward using fewer components
   | "led-current-target" // Adjust resistor to reach target LED current
-  | "rlc-resonance-target"; // Adjust L and C (and optionally R) to hit target f0
+  | "rlc-resonance-target" // Adjust L and C (and optionally R) to hit target f0
+  | "dtl-output-target"; // Adjust R1/R2 to achieve a HIGH or LOW on OUT
 
 export interface Mission {
   id: string;
@@ -47,6 +48,16 @@ export interface Mission {
     | {
         kind: "rlc-resonance-target";
         params: { targetFrequencyHz: number; toleranceHz?: number };
+      }
+    | {
+        kind: "dtl-output-target";
+        params: {
+          supply?: number; // default 5 V
+          target: "HIGH" | "LOW"; // desired OUT logic level
+          minHighV?: number; // default 4.0 V
+          maxLowV?: number; // default 0.5 V
+          vbeOn?: number; // default 0.7 V (heuristic only)
+        };
       };
   scoring?: { accuracyWeight?: number; efficiencyWeight?: number; base?: number };
 }
@@ -130,7 +141,7 @@ const missionCatalog: Mission[] = [
     id: "mission-dtl-1",
     difficulty: "hard",
     title: "Assemble a DTL Gate",
-    description: "Build the DTL logic stage with 3 diodes, 2 resistors, and 1 transistor.",
+    description: "Build the DTL logic stage and tune R1/R2 to get a HIGH at OUT.",
     templateId: "hard-2",
     allowedComponents: [
       { type: "D", maxCount: 3 },
@@ -139,8 +150,8 @@ const missionCatalog: Mission[] = [
     ],
     constraints: { maxComponents: 6 },
     goal: {
-      kind: "component-efficiency",
-      params: { maxComponents: 6 },
+      kind: "dtl-output-target",
+      params: { target: "HIGH", supply: 5, minHighV: 4.0 },
     },
     scoring: { base: 90, accuracyWeight: 0.4, efficiencyWeight: 0.6 },
   },
@@ -272,6 +283,51 @@ function simulateRlcResonanceTarget(
   const tol = params.toleranceHz ?? Math.max(1, params.targetFrequencyHz * 0.1);
   const ok = Math.abs(f0 - params.targetFrequencyHz) <= tol;
   return { ok, freqHz: f0 };
+}
+
+// Very lightweight DTL stage heuristic
+// Model: VCC -> R2 -> OUT -> Q1 collector. Base bias: VCC -> R1 -> J_IN -> Q1 base.
+// If base is forward biased (Vb > ~VbeOn), transistor conducts, pulling OUT low through collector path.
+// Else transistor is off and OUT is pulled up by R2 toward VCC.
+function simulateDtlOutputTarget(
+  placed: ComponentPlacement[],
+  template: CircuitTemplate,
+  params: { supply?: number; target: 'HIGH' | 'LOW'; minHighV?: number; maxLowV?: number; vbeOn?: number },
+  options?: { componentValues?: Record<string, number>; units?: 'ohm' | 'kOhm' }
+) {
+  const supply = params.supply ?? 5;
+  const vbeOn = params.vbeOn ?? 0.7;
+
+  // Check presence of required parts
+  const haveR1 = placed.some((p) => p.instanceId === 'R1' && p.type === 'R');
+  const haveR2 = placed.some((p) => p.instanceId === 'R2' && p.type === 'R');
+  const haveQ1 = placed.some((p) => p.instanceId === 'Q1' && p.type === 'Q');
+  const haveDiodes = ['D1','D2','D3'].every(id => placed.some(p => p.instanceId === id && p.type === 'D'));
+  if (!haveR1 || !haveR2 || !haveQ1 || !haveDiodes) {
+    return { ok: false, outV: 0, reason: 'missing-components' };
+  }
+
+  const vals = options?.componentValues ?? {};
+  const unitScale = options?.units === 'kOhm' ? 1000 : 1;
+  const R1 = Math.max(1e-3, (typeof vals['R1'] === 'number' ? vals['R1'] : 100) * unitScale); // bias
+  const R2 = Math.max(1e-3, (typeof vals['R2'] === 'number' ? vals['R2'] : 100) * unitScale); // pull-up
+
+  // Heuristic base divider: Vb ≈ VCC * (R_sink / (R1 + R_sink)).
+  // Assume inputs HIGH so diodes are off; model base-emitter path as a finite sink (Rbe) to GND so R1 tuning matters.
+  const Rbe = 50000; // 50 kΩ effective base-emitter resistance when near conduction
+  const Vb = supply * (Rbe / (R1 + Rbe));
+  // Continuous conduction factor so R1 affects OUT smoothly
+  const slope = 0.5; // V window for transition
+  const k = Math.min(1, Math.max(0, (Vb - vbeOn) / slope));
+  const RceOn = 100; // ohms when saturated
+  const RceOff = 1e9; // effectively open when off
+  const RceEff = 1 / ((k / RceOn) + ((1 - k) / RceOff)); // harmonic mix of on/off
+  const outV = supply * (RceEff / (R2 + RceEff));
+
+  const minHigh = params.minHighV ?? 0.8 * supply; // default ~80% of Vcc
+  const maxLow = params.maxLowV ?? 0.5; // 0.5 V default
+  const ok = params.target === 'HIGH' ? outV >= minHigh : outV <= maxLow;
+  return { ok, outV, baseOn: k > 0.5 };
 }
 
 // Behavior-first validator that falls back to legacy rules where no mission exists.
@@ -450,6 +506,30 @@ export function validateCircuit(
           const target = mission.goal.params.targetFrequencyHz;
           const tol = mission.goal.params.toleranceHz ?? Math.max(1, target * 0.1);
           hints.push(`Adjust L (mH) or C (µF) to reach ~${Math.round(target)} Hz (±${Math.round(tol)} Hz). Increase C or L to lower f₀; decrease them to raise f₀.`);
+        }
+      }
+      break;
+    }
+    case "dtl-output-target": {
+      const sim = simulateDtlOutputTarget(placedComponents, template, mission.goal.params, options);
+      telemetry = sim;
+      pass = sim.ok;
+      if (!sim.ok) {
+        // Provide actionable hints
+        const haveR1 = placedComponents.some((p) => p.instanceId === 'R1' && p.type === 'R');
+        const haveR2 = placedComponents.some((p) => p.instanceId === 'R2' && p.type === 'R');
+        const haveQ1 = placedComponents.some((p) => p.instanceId === 'Q1' && p.type === 'Q');
+        const haveDiodes = ['D1','D2','D3'].every(id => placedComponents.some(p => p.instanceId === id && p.type === 'D'));
+        if (!haveDiodes) hints.push('Place three diodes D1, D2, D3 feeding the base junction J_IN.');
+        if (!haveR1) hints.push('Add R1 from VCC to J_IN to bias the transistor base.');
+        if (!haveR2) hints.push('Add R2 from VCC to the collector/output node to pull OUT up.');
+        if (!haveQ1) hints.push('Place the transistor Q1 with C at J_COL, E to GND, and B to J_IN.');
+        if (haveR1 && haveR2 && haveQ1 && haveDiodes) {
+          if (mission.goal.params.target === 'HIGH') {
+            hints.push('Aim for OUT to be near VCC. Increase R1 (weaker base bias) or increase R2 to raise OUT.');
+          } else {
+            hints.push('Aim for OUT to be near 0V. Decrease R1 (stronger base bias) or decrease R2 to pull OUT down more when Q1 conducts.');
+          }
         }
       }
       break;
