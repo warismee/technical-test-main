@@ -482,7 +482,16 @@ export const circuitTemplates: CircuitTemplate[] = [
     { id: 'J3', type: 'junction', connections: ['C3', 'R3'], position: { x: 150, y: 192 } }
   ],
     validationRules: {
-  componentCount: { R: 3, C: 3, OP: 1 }
+  componentCount: { R: 3, C: 3, OP: 1 },
+  requiredPlacements: [
+    { nodeId: 'OP1', expectedType: 'OP', position: { x: 480, y: 200 } },
+    { nodeId: 'R1', expectedType: 'R', position: { x: 380, y: 280 } },
+    { nodeId: 'R2', expectedType: 'R', position: { x: 250, y: 280 } },
+    { nodeId: 'R3', expectedType: 'R', position: { x: 150, y: 280 } },
+    { nodeId: 'C1', expectedType: 'C', position: { x: 330, y: 192 } },
+    { nodeId: 'C2', expectedType: 'C', position: { x: 200, y: 192 } },
+    { nodeId: 'C3', expectedType: 'C', position: { x: 90, y: 192 } }
+  ]
     }
   },
   {
