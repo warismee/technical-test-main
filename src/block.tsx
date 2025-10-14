@@ -22,6 +22,7 @@ import {
   FaFire
 } from "react-icons/fa";
 import { IoSparkles } from "react-icons/io5";
+import { useRealtimeGame } from './realtime';
 
 interface BlockProps {
   difficulty?: "easy" | "medium" | "hard";
@@ -34,6 +35,7 @@ interface BlockProps {
   use3DCircuit?: boolean;
   viewMode?: "2d-schematic" | "3d-realistic";
   showControls?: boolean;
+  roomId?: string; // realtime room id
 }
 
 type ViewMode = "2d-schematic" | "3d-realistic";
@@ -393,6 +395,7 @@ export const Block: React.FC<BlockProps> = ({
   use3DCircuit = false,
   viewMode: initialViewMode = "2d-schematic",
   showControls = true,
+  roomId = 'circuit-room'
 }) => {
   // State for managing view mode internally
   const [currentViewMode, setCurrentViewMode] = useState<ViewMode>(
@@ -402,14 +405,16 @@ export const Block: React.FC<BlockProps> = ({
   // State to manage component selection between UI overlay and circuit scene
   const [selectedComponentFromUI, setSelectedComponentFromUI] = useState<string | null>(null);
   
-  // State to track placed components for validation
+  // Local mirror of realtime placements (for quick render diffing)
   const [placedComponents, setPlacedComponents] = useState<{[nodeId: string]: string}>({});
   
   // State for difficulty selection (overrides prop)
   const [currentDifficulty, setCurrentDifficulty] = useState<"easy" | "medium" | "hard">(difficulty);
   
-  // Scoreboard state
+  // Scoreboard state (local personal score)
   const [score, setScore] = useState(0);
+  // Realtime shared state (aggregate + presence + mission + placements)
+  const { sharedScore, adjustSharedScore, setPersonalScore, peers, isConnected, missionId, setMissionId, placed, patchPlaced, missionValues, patchMissionValue, hintMeta, applyHintPenalty } = useRealtimeGame({ roomId, initialScore: 0 });
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [questionsCorrect, setQuestionsCorrect] = useState(0);
   
@@ -425,9 +430,10 @@ export const Block: React.FC<BlockProps> = ({
   // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState(theme === "dark");
   // Mission-tunable properties (e.g., resistor values in kΩ for divider mission)
+  // Local mirror for mission component values replaced by realtime missionValues
   const [missionComponentValues, setMissionComponentValues] = useState<{ [id: string]: number }>({});
-  // Mission state
-  const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
+  // Mission state (local fallback). Realtime missionId will override if present.
+  const [activeMissionIdLocal, setActiveMissionIdLocal] = useState<string | null>(null);
   const [shownMissionIds, setShownMissionIds] = useState<string[]>([]);
   
   // Question summary state
@@ -447,7 +453,7 @@ export const Block: React.FC<BlockProps> = ({
 
     // If template pool is exhausted but we're in mission mode, don't end the game here
     if (template === null) {
-      if (!activeMissionId) {
+      if (!(activeMissionIdLocal)) {
         setIsGameComplete(true);
       }
       return null;
@@ -458,13 +464,18 @@ export const Block: React.FC<BlockProps> = ({
       setShownQuestionIds(prev => [...prev, template.id]);
     }
     return template;
-  }, [currentDifficulty, questionsAnswered, activeMissionId]);
+  }, [currentDifficulty, questionsAnswered, activeMissionIdLocal]);
 
   const activeTemplate = useMemo(() => {
-    const missionTemplate = activeMissionId ? getTemplateForMission(activeMissionId) : null;
+    const missionTemplate = activeMissionIdLocal ? getTemplateForMission(activeMissionIdLocal) : null;
     // Fallback to currentTemplate if mission mapping is missing
     return missionTemplate ?? currentTemplate;
-  }, [currentTemplate, activeMissionId]);
+  }, [currentTemplate, activeMissionIdLocal]);
+
+  // Sync local mission component values with realtime values
+  useEffect(() => {
+    setMissionComponentValues(missionValues);
+  }, [missionValues]);
 
   // Debug - show specific template (change debugTemplateId to test different templates)
   // const currentTemplate = useMemo(() => {
@@ -486,10 +497,10 @@ export const Block: React.FC<BlockProps> = ({
   //   return circuitTemplates[0] || null;
   // }, []); // Empty dependency array to keep it stable for debugging
 
-  // Reset placed components when template changes
+  // Sync local placements with realtime when template or shared placed map changes
   useEffect(() => {
-    setPlacedComponents({});
-  }, [activeTemplate?.id]);
+    setPlacedComponents(placed);
+  }, [placed, activeTemplate?.id]);
 
   // Handle difficulty change
   const handleDifficultyChange = (newDifficulty: "easy" | "medium" | "hard") => {
@@ -524,7 +535,7 @@ export const Block: React.FC<BlockProps> = ({
     setIsGameStarted(true);
   // Keep currentDifficulty; pick a fresh mission on restart
   const mission = generateUniqueMission(currentDifficulty, []);
-  setActiveMissionId(mission ? mission.id : null);
+  setActiveMissionIdLocal(mission ? mission.id : null);
   if (mission) {
     setShownMissionIds([mission.id]);
   }
@@ -548,11 +559,11 @@ export const Block: React.FC<BlockProps> = ({
     // Start with the first available mission for the selected difficulty
     const mission = generateUniqueMission(selectedDifficulty, []);
     if (mission) {
-      setActiveMissionId(mission.id);
+  setActiveMissionIdLocal(mission.id);
       setShownMissionIds([mission.id]);
     } else {
       // No missions available for this difficulty; clear mission mode
-      setActiveMissionId(null);
+  setActiveMissionIdLocal(null);
     }
   };
 
@@ -570,7 +581,7 @@ export const Block: React.FC<BlockProps> = ({
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
     const mission = generateUniqueMission(newDifficulty, []);
-    setActiveMissionId(mission ? mission.id : null);
+  setActiveMissionIdLocal(mission ? mission.id : null);
     if (mission) {
       setShownMissionIds([mission.id]);
     }
@@ -589,31 +600,20 @@ export const Block: React.FC<BlockProps> = ({
     setScore(0);
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
-  setActiveMissionId(null);
+  setActiveMissionIdLocal(null);
   };
 
   // Handle when a component is placed in the circuit
   const handleComponentPlaced = (nodeId: string, componentType: string) => {
-    // Clear the selected component from UI after placement
-    setSelectedComponentFromUI(null);
-    
-    // Update placed components tracking
-    setPlacedComponents(prev => ({
-      ...prev,
-      [nodeId]: componentType
-    }));
-    
-    console.log(`Component ${componentType} placed at ${nodeId}`);
+  setSelectedComponentFromUI(null);
+  patchPlaced(nodeId, componentType);
+  console.log(`Component ${componentType} placed at ${nodeId}`);
   };
 
   // Handle when a component is removed from the circuit
   const handleComponentRemoved = (nodeId: string) => {
-    setPlacedComponents(prev => {
-      const updated = { ...prev };
-      delete updated[nodeId];
-      return updated;
-    });
-    console.log(`Component removed from ${nodeId}`);
+  patchPlaced(nodeId, null);
+  console.log(`Component removed from ${nodeId}`);
   };
 
   // Handle circuit validation and show summary
@@ -639,7 +639,7 @@ export const Block: React.FC<BlockProps> = ({
     const connections: Array<{ from: string; to: string }> = [];
     
   const result = validateCircuit(placedComponentsArray, connections, activeTemplate, {
-      componentValues: missionComponentValues,
+  componentValues: missionComponentValues,
       units: 'kOhm',
     });
     
@@ -655,6 +655,9 @@ export const Block: React.FC<BlockProps> = ({
       newQuestionsCorrect = questionsCorrect + 1;
       setScore(newScore);
       setQuestionsCorrect(newQuestionsCorrect);
+      // Realtime: add to shared aggregate & update own personal score in presence map
+      adjustSharedScore(result.score);
+      setPersonalScore(newScore);
     }
     
     // Show question summary instead of alert
@@ -680,14 +683,14 @@ export const Block: React.FC<BlockProps> = ({
     // Reset components for next question
     setPlacedComponents({});
     setSelectedComponentFromUI(null);
-    setMissionComponentValues({});
+  setMissionComponentValues({});
 
     // Advance to next mission if mission mode is active; otherwise continue template mode
-    if (activeMissionId) {
+  if (activeMissionIdLocal) {
       // Try to get next unique mission in same difficulty avoiding shownMissionIds
       const nextMission = generateUniqueMission(currentDifficulty, shownMissionIds);
       if (nextMission) {
-        setActiveMissionId(nextMission.id);
+  setActiveMissionIdLocal(nextMission.id);
         setShownMissionIds((prev) => [...prev, nextMission.id]);
       } else {
         // No more missions; mark game complete
@@ -704,14 +707,14 @@ export const Block: React.FC<BlockProps> = ({
   // Ensure defaults for DTL mission controls so prediction shows up
   React.useEffect(() => {
     if (!activeTemplate) return;
-    const m = activeMissionId ? getMissionById(activeMissionId) : getMissionForTemplate(activeTemplate);
+  const m = activeMissionIdLocal ? getMissionById(activeMissionIdLocal) : getMissionForTemplate(activeTemplate);
     if (m && m.goal.kind === 'dtl-output-target') {
       setMissionComponentValues((prev) => ({
         R1: prev['R1'] ?? 100,
         R2: prev['R2'] ?? 100,
       }));
     }
-  }, [activeMissionId, activeTemplate]);
+  }, [activeMissionIdLocal, activeTemplate]);
 
   // Dynamic theme and background based on dark mode
   const currentTheme = isDarkMode ? "dark" : "light";
@@ -747,7 +750,7 @@ export const Block: React.FC<BlockProps> = ({
           <>
             <MissionSchematic2DScene
         template={activeTemplate!}
-              mission={activeMissionId ? (getMissionById(activeMissionId) ?? undefined) : undefined}
+              mission={activeMissionIdLocal ? (getMissionById(activeMissionIdLocal) ?? undefined) : undefined}
               selectedComponentFromUI={selectedComponentFromUI}
               onComponentPlaced={handleComponentPlaced}
               placedComponents={placedComponents}
@@ -766,9 +769,10 @@ export const Block: React.FC<BlockProps> = ({
               hasPlacedComponents={Object.keys(placedComponents).length > 0}
               score={score}
               onHintUsed={(penaltyPercent) => {
-                // Apply a one-time 10% deduction on the current score value
-                // Use functional update to avoid stale closures if rapid clicks
+                // Local personal score penalty
                 setScore((prev) => Math.round(prev * (1 - penaltyPercent)));
+                // Shared aggregate penalty synced across players
+                applyHintPenalty(penaltyPercent);
               }}
               questionsAnswered={questionsAnswered}
               questionsCorrect={questionsCorrect}
@@ -776,16 +780,16 @@ export const Block: React.FC<BlockProps> = ({
               onBackToMenu={handleBackToMenu}
               isDarkMode={isDarkMode}
               onToggleDarkMode={toggleDarkMode}
-              mission={activeMissionId ? (getMissionById(activeMissionId) ?? undefined) : undefined}
-              allowedComponentTypes={(activeMissionId ? getMissionById(activeMissionId)?.allowedComponents : getMissionForTemplate(activeTemplate!)?.allowedComponents)?.map(a => a.type)}
-              allowedComponents={(activeMissionId ? getMissionById(activeMissionId)?.allowedComponents : getMissionForTemplate(activeTemplate!)?.allowedComponents)}
-              missionTitle={activeMissionId ? getMissionById(activeMissionId)?.title : getMissionForTemplate(activeTemplate! )?.title}
-              missionDescription={activeMissionId ? getMissionById(activeMissionId)?.description : getMissionForTemplate(activeTemplate! )?.description}
-              constraints={activeMissionId ? getMissionById(activeMissionId)?.constraints : getMissionForTemplate(activeTemplate! )?.constraints}
+              mission={activeMissionIdLocal ? (getMissionById(activeMissionIdLocal) ?? undefined) : undefined}
+              allowedComponentTypes={(activeMissionIdLocal ? getMissionById(activeMissionIdLocal)?.allowedComponents : getMissionForTemplate(activeTemplate!)?.allowedComponents)?.map(a => a.type)}
+              allowedComponents={(activeMissionIdLocal ? getMissionById(activeMissionIdLocal)?.allowedComponents : getMissionForTemplate(activeTemplate!)?.allowedComponents)}
+              missionTitle={activeMissionIdLocal ? getMissionById(activeMissionIdLocal)?.title : getMissionForTemplate(activeTemplate! )?.title}
+              missionDescription={activeMissionIdLocal ? getMissionById(activeMissionIdLocal)?.description : getMissionForTemplate(activeTemplate! )?.description}
+              constraints={activeMissionIdLocal ? getMissionById(activeMissionIdLocal)?.constraints : getMissionForTemplate(activeTemplate! )?.constraints}
               missionValues={missionComponentValues}
               missionUnits={'kOhm'}
               componentControls={(() => {
-                const m = activeMissionId ? getMissionById(activeMissionId) : getMissionForTemplate(activeTemplate!);
+                const m = activeMissionIdLocal ? getMissionById(activeMissionIdLocal) : getMissionForTemplate(activeTemplate!);
                 if (!m) return undefined;
                 if (m.goal.kind === 'led-current-target') {
                   return [{ id: 'R1', label: 'R1', unit: 'kΩ', value: missionComponentValues['R1'] ?? 1, min: 0.001, max: 1000, step: 0.1 }];
@@ -811,8 +815,20 @@ export const Block: React.FC<BlockProps> = ({
                 }
                 return undefined;
               })()}
-              onComponentControlChange={(id, value) => setMissionComponentValues(prev => ({ ...prev, [id]: value }))}
+              onComponentControlChange={(id, value) => {
+                setMissionComponentValues(prev => ({ ...prev, [id]: value }));
+                patchMissionValue(id, value);
+              }}
             />
+            {/* Shared realtime meta (aggregate score & hints) */}
+            <div className="absolute top-2 left-2 text-xs px-3 py-2 rounded bg-black/50 text-white backdrop-blur-sm space-y-1 shadow">
+              <div>Shared Score: <span className="font-semibold">{sharedScore}</span></div>
+              <div>Hints Used (room): {hintMeta?.count ?? 0}</div>
+              {hintMeta?.lastPenaltyPercent ? (
+                <div className="opacity-70">Last Penalty: {Math.round((hintMeta.lastPenaltyPercent)*100)}%</div>
+              ) : null}
+              <div className={`mt-1 h-2 rounded ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} title={isConnected ? 'Connected' : 'Disconnected'} />
+            </div>
           </>
         );
     }

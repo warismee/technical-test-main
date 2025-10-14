@@ -42,6 +42,8 @@ interface CircuitUIOverlayProps {
     step?: number;
   }>;
   onComponentControlChange?: (id: string, value: number) => void;
+  // Realtime hint metadata (synchronized)
+  hintMeta?: { count: number; lastPenaltyPercent?: number; lastAt?: number };
 }
 
 interface Component {
@@ -250,6 +252,7 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
   componentControls,
   onComponentControlChange,
   onHintUsed,
+  hintMeta,
 }) => {
   const difficulty = currentTemplate.difficulty;
 
@@ -306,6 +309,11 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
   // apply a local 10% penalty view-only.
   const displayedScore = showHint && !onHintUsed ? Math.round(score * 0.9) : score;
 
+  // Derived realtime hint info (if provided)
+  const hintsUsed = hintMeta?.count ?? (hintPenaltyApplied ? 1 : 0);
+  const lastPenaltyPercent = hintMeta?.lastPenaltyPercent ?? (hintPenaltyApplied ? 0.1 : undefined);
+  const lastHintAgoMs = hintMeta?.lastAt ? Date.now() - hintMeta.lastAt : undefined;
+  const lastHintAgoSec = lastHintAgoMs != null ? Math.floor(lastHintAgoMs / 1000) : undefined;
 
   return (
     <div className="absolute inset-0 pointer-events-none">
@@ -642,6 +650,18 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
       )}
 
 
+      {/* Inject synced hint usage panel (top-center) */}
+      <div className={`absolute top-4 left-1/2 -translate-x-1/2 ${sidebarBg} px-4 py-2 rounded-lg shadow pointer-events-auto`}>        
+        <div className={`text-xs ${textColor} flex flex-col items-center`}>          
+          <span className="font-semibold">Hints Used: {hintsUsed}</span>
+          {lastPenaltyPercent != null && (
+            <span className="opacity-75">Last Penalty: -{Math.round(lastPenaltyPercent * 100)}%</span>
+          )}
+          {lastHintAgoSec != null && (
+            <span className="opacity-60 text-[10px]">Last hint {lastHintAgoSec}s ago</span>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

@@ -9,5 +9,6 @@ mount(container, {
   difficulty: 'medium',
   theme: 'light',
   playerCount: 1,
-  autoRotate: true
+  autoRotate: true,
+  roomId: 'demo-circuit-room'
 });

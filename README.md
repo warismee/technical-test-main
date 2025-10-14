@@ -132,3 +132,50 @@ This test is designed to take **2-4 hours**. Focus on:
 **Quality over quantity!** A well-executed simple experience is better than a complex but buggy one.
 
 Good luck and have fun! 🚀
+
+## 🔄 Realtime Implementation (@mexty/realtime)
+
+This block now supports collaborative play. Multiple users joining with the same `roomId` share:
+
+- A shared aggregate score (`sharedScore`) across the room
+- Per-user presence (name, color, lastActive timestamp, personalScore)
+- Automatic heartbeats every 15s to refresh presence
+
+### How It Works
+
+`src/realtime.ts` wraps the SDK `useCollabSpace` hook with a typed document shape:
+
+```ts
+interface RealtimeState {
+  sharedScore: number;
+  missionsCompleted: number;
+  presence: Record<string, {
+    name: string;
+    color: string;
+    lastActive: number;
+    personalScore: number;
+  }>;
+}
+```
+
+On successful mission validation we:
+1. Update local player score
+2. Increment shared aggregate via `adjustSharedScore(delta)`
+3. Store the player's updated personalScore in presence with `setPersonalScore(newScore)`
+
+Presence entries are created lazily if missing and refreshed on an interval. No explicit project ID is required for the current SDK usage.
+
+### Example Props
+
+```json
+{
+  "roomId": "circuit-room-alpha",
+  "difficulty": "medium",
+  "theme": "light",
+  "playerCount": 1,
+  "viewMode": "2d-schematic"
+}
+```
+
+Open two browser tabs with the same `roomId` to see shared scoring update in real-time after each mission validation.
+
