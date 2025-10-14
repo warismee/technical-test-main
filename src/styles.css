@@ -1,3 +1,28 @@
+.btn {
+  cursor: pointer;
+}
+.submit-btn {
+  background-color: #16a34a; /* green-600 */
+  cursor: pointer;
+}
+.submit-btn:hover {
+  background-color: #15803d; /* green-700 */
+}
+.cancel-selection-btn {
+  background-color: #6b7280; /* gray-500 */
+  cursor: pointer;
+}
+.cancel-selection-btn:hover {
+  background-color: #4b5563; /* gray-600 */
+}
+@media (prefers-color-scheme: dark) {
+  .cancel-selection-btn {
+    background-color: #4b5563; /* gray-600 */
+  }
+  .cancel-selection-btn:hover {
+    background-color: #374151; /* gray-700 */
+  }
+}
 .mt-8 {
   margin-top: 2rem;
 }

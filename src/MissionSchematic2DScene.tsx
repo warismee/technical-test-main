@@ -127,7 +127,7 @@ export default function MissionSchematic2DScene({
       </div>
 
       {/* Allowed components (from mission) */}
-      <div className={`absolute top-4 right-4 px-3 py-2 rounded-md shadow ${
+      {/* <div className={`absolute top-4 right-4 px-3 py-2 rounded-md shadow ${
         isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"
       }`}>
         <div className="text-xs font-semibold mb-1">Allowed Components</div>
@@ -142,7 +142,7 @@ export default function MissionSchematic2DScene({
         {typeof MAX_COMPONENTS === 'number' && (
           <div className="text-[11px] mt-1 opacity-70">Max total: {MAX_COMPONENTS}</div>
         )}
-      </div>
+      </div> */}
 
   {/* Resistor value controls and predicted Vout (values in kΩ) — shown for voltage-threshold missions */}
       {/* {mission?.goal?.kind === 'voltage-threshold' && (

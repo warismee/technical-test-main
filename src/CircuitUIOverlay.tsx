@@ -305,7 +305,7 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
           <div className="mb-2">
             <button
               onClick={() => onBackToMenu?.()}
-              className={`w-full px-3 py-2 text-xs rounded font-medium transition-colors ${
+              className={`btn w-full px-3 py-2 text-xs rounded font-medium transition-colors ${
                 isDark 
                   ? 'bg-gray-600 hover:bg-gray-700 text-white' 
                   : 'bg-gray-500 hover:bg-gray-600 text-white'
@@ -452,7 +452,7 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
         </div>
       </div>
 
-      <div className={`absolute bottom-4 right-4 transform ${sidebarBg} p-4 rounded-lg shadow-lg pointer-events-auto`}>
+  <div className={`absolute bottom-4 right-4 transform ${sidebarBg} p-4 rounded-lg shadow-lg pointer-events-auto`} style={{ width: '18rem' }}>
         <h3 className={`text-sm font-bold ${textColor} mb-2`}>Components</h3>
     {derivedAllowedComponents && (
           <div className={`text-xs ${textColor} opacity-75 mb-2`}>
@@ -486,7 +486,7 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
               onClick={() => {
                 onComponentSelected?.(null);
               }}
-              className={`w-full px-3 py-2 text-xs ${isDark ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-500 hover:bg-gray-600'} text-white rounded transition-colors`}
+              className={`btn mb-4 w-full px-3 py-2 text-xs cancel-selection-btn text-white rounded transition-colors`}
             >
               Cancel Selection
             </button>
@@ -497,10 +497,10 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
               onClick={() => {
                 onValidateCircuit?.();
               }}
-              className={`w-full px-3 py-2 text-xs bg-green-600 hover:bg-green-700 text-white rounded transition-colors font-medium`}
+              className={`btn mb-4 w-full px-3 py-2 text-xs submit-btn text-white rounded transition-colors font-medium`}
             >
               <span className="flex items-center justify-center gap-1">
-                <MdCheck size={14} /> Submit & Validate Circuit
+                <MdCheck size={14} /> Validate Circuit
               </span>
             </button>
           )}
@@ -509,7 +509,7 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
           {onToggleDarkMode && (
             <button
               onClick={onToggleDarkMode}
-              className={`w-full px-3 py-2 text-xs rounded transition-colors ${
+              className={`btn w-full px-3 py-2 text-xs rounded transition-colors ${
                 isDarkMode 
                   ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400' 
                   : 'bg-gray-100 hover:bg-gray-200 text-gray-600'

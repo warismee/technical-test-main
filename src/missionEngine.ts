@@ -77,7 +77,7 @@ const missionCatalog: Mission[] = [
     constraints: { maxComponents: 3 },
     goal: {
       kind: "voltage-threshold",
-      params: { node: "OUT", minVoltage: 2.0, supply: 5 },
+      params: { node: "OUT", minVoltage: 3.0, supply: 5 }, // Raised minVoltage so player must adjust resistor values
       successTolerance: 0.05,
     },
     scoring: { base: 60, accuracyWeight: 0.4, efficiencyWeight: 0.6 },

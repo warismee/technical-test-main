@@ -81,7 +81,7 @@ function QuestionSummary({
         {onToggleDarkMode && (
           <button
             onClick={onToggleDarkMode}
-            className={`absolute top-4 right-4 p-2 rounded-lg transition-colors ${
+            className={`btn absolute top-4 right-4 p-2 rounded-lg transition-colors ${
               isDarkMode 
                 ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400' 
                 : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
@@ -92,8 +92,8 @@ function QuestionSummary({
           </button>
         )}
         <div className="text-center">
-          <div className="text-6xl mb-4">
-            {isValid ? <MdCheckCircle size={96} className="text-green-500 mx-auto" /> : <MdCancel size={96} className="text-red-500 mx-auto" />}
+          <div className="text-6xl mb-4 flex justify-center">
+            {isValid ? <MdCheckCircle size={96} className="text-green-500" /> : <MdCancel size={96} className="text-red-500" />}
           </div>
           
           <h2 className={`text-2xl font-bold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
@@ -144,7 +144,7 @@ function QuestionSummary({
           
           <button
             onClick={onNextQuestion}
-            className="w-full py-3 px-6 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors"
+            className="btn w-full py-3 px-6 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors"
           >
             <span className="flex items-center justify-center gap-2">
               Continue to Next Mission <MdArrowForward />
@@ -213,7 +213,7 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
         {onToggleDarkMode && (
           <button
             onClick={onToggleDarkMode}
-            className={`absolute top-4 right-4 p-2 rounded-lg transition-colors ${
+            className={`btn absolute top-4 right-4 p-2 rounded-lg transition-colors ${
               isDarkMode 
                 ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400' 
                 : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
@@ -255,7 +255,7 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
           <div className="space-y-3">
             <button
               onClick={onRestart}
-              className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-colors ${getDifficultyColor(difficulty)}`}
+              className={`btn w-full py-3 px-4 rounded-lg text-white font-medium transition-colors ${getDifficultyColor(difficulty)}`}
             >
               <span className="flex items-center justify-center gap-2">
                 <MdRefresh /> Play {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Again
@@ -267,7 +267,7 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
                 <button
                   key={diff}
                   onClick={() => onChangeDifficulty(diff)}
-                  className={`flex-1 py-2 px-3 rounded-lg text-white font-medium transition-colors ${getDifficultyColor(diff)}`}
+                  className={`btn flex-1 py-2 px-3 rounded-lg text-white font-medium transition-colors ${getDifficultyColor(diff)}`}
                 >
                   Try {diff.charAt(0).toUpperCase() + diff.slice(1)}
                 </button>
@@ -276,7 +276,7 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
             
             <button
               onClick={onBackToMenu}
-              className="w-full py-2 px-4 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-medium transition-colors"
+              className="btn w-full py-2 px-4 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-medium transition-colors"
             >
               <span className="flex items-center justify-center gap-2">
                 <MdHome /> Back to Menu
@@ -353,9 +353,9 @@ function DifficultyMenu({ onStartGame, theme, isDarkMode = false, onToggleDarkMo
             <div key={diff} className="text-center">
               <button
                 onClick={() => onStartGame(diff)}
-                className={`w-full p-6 rounded-xl text-white font-bold text-xl transition-all duration-200 transform hover:scale-105 shadow-lg ${getDifficultyColor(diff)}`}
+                className={`btn w-full p-6 rounded-xl text-white font-bold text-xl transition-all duration-200 transform hover:scale-105 shadow-lg ${getDifficultyColor(diff)}`}
               >
-                <div className="text-4xl mb-3">{getDifficultyIcon(diff)}</div>
+                <div className="text-4xl mb-3 flex justify-center">{getDifficultyIcon(diff)}</div>
                 <div className="text-2xl mb-2">{diff.charAt(0).toUpperCase() + diff.slice(1)}</div>
                 <div className="text-sm opacity-90 font-normal leading-relaxed">
                   {getDifficultyDescription(diff)}
