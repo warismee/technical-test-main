@@ -532,8 +532,10 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
             {componentControls.map(ctrl => (
               <div key={ctrl.id} className="text-xs">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium">{ctrl.label}</span>
-                  <span className="opacity-70">{ctrl.value}{ctrl.unit ? ` ${ctrl.unit}` : ''}</span>
+                  <span className={isDarkMode ? "text-white" : "opacity-70"}>{ctrl.label}</span>
+                  <span className={isDarkMode ? "text-white" : "opacity-70"}>
+                    {ctrl.value}{ctrl.unit ? ` ${ctrl.unit}` : ''}
+                  </span>
                 </div>
                 <input
                   className={`w-full ${isDark ? 'accent-yellow-400' : 'accent-blue-600'} ${controlsDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}

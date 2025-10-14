@@ -703,7 +703,7 @@ export const Block: React.FC<BlockProps> = ({
 
   // Dynamic theme and background based on dark mode
   const currentTheme = isDarkMode ? "dark" : "light";
-  const backgroundColor = isDarkMode ? "#111" : "#fafafa";
+  // Background now handled via animated gradient classes in styles.css
 
   // Mode info descriptions
   const getModeInfo = (mode: ViewMode): string => {
@@ -831,7 +831,7 @@ export const Block: React.FC<BlockProps> = ({
   }
 
   return (
-    <div className="relative w-full h-full" style={{ backgroundColor }}>
+    <div className={`relative w-full h-full ${isDarkMode ? 'animated-gradient-dark' : 'animated-gradient-light'}`}>
       {/* Render the current view */}
       {renderCurrentView()}
       

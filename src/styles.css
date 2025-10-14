@@ -24,3 +24,22 @@ html, body {
 .hidden {
   display: none !important;
 }
+
+/* Animated moving gradient backgrounds */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animated-gradient-light {
+  background: linear-gradient(120deg, #e6f0ff, #fdf2f8, #f7fee7, #e0f2fe);
+  background-size: 300% 300%;
+  animation: gradientShift 18s ease infinite;
+}
+
+.animated-gradient-dark {
+  background: linear-gradient(120deg, #0a161c,#0F2027, #203A43, #2C5364);
+  background-size: 300% 300%;
+  animation: gradientShift 22s ease-in-out infinite;
+}
