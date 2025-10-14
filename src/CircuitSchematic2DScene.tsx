@@ -130,6 +130,12 @@ export default function CircuitSchematic2D({
   
   // Helper function to calculate component rotation (angle between its two connected nodes)
   const calculateComponentRotation = (node: any): number => {
+    // Per-node override: a node can request a fixed rotation (in radians)
+    if (typeof (node as any).fixedRotation === 'number') {
+      return (node as any).fixedRotation as number;
+    }
+    // Respect template flag to disable auto-rotation for specific circuits
+    if (template.disableAutoRotation) return 0;
     // Keep transistors in canonical orientation (base left, collector up, emitter down)
     // because wiring uses fixed offsets for Q pins that assume no rotation.
     // Applies to any node with id starting with 'Q' or explicitly placed as a transistor.
@@ -510,8 +516,27 @@ export default function CircuitSchematic2D({
             toConnectionY = connectedY;
           }
           
-          // Medium-8 uses straight wires; others use orthogonal L-shaped routing
-          if (template.id === 'medium-8') {
+          // Use template routing preference: straight vs orthogonal L-shaped,
+          // with per-connection overrides for specific templates.
+          const isHard10 = template.id === 'hard-10';
+          const involvesVCC = node.id === 'VCC' || connectedId === 'VCC';
+          const involvesGND = node.id === 'GND' || connectedId === 'GND';
+
+          // Force straight routing for any GND connection in hard-10
+          if (isHard10 && involvesGND) {
+            return (
+              <SchematicWire
+                key={`${node.id}-${connectedId}-straight-gn`}
+                from={[fromConnectionX, fromConnectionY, 0]}
+                to={[toConnectionX, toConnectionY, 0]}
+                isDarkMode={isDarkMode}
+              />
+            );
+          }
+
+          // Respect global straight routing unless we must force L for VCC in hard-10
+          const useGlobalStraight = template.routing === 'straight' && !(isHard10 && involvesVCC);
+          if (useGlobalStraight) {
             return (
               <SchematicWire
                 key={`${node.id}-${connectedId}-straight`}
@@ -524,17 +549,49 @@ export default function CircuitSchematic2D({
 
           const dxAbs = Math.abs(fromConnectionX - toConnectionX);
           const dyAbs = Math.abs(fromConnectionY - toConnectionY);
-          // Prefer routing aligned with transistor leg when applicable
-          const fromPin = (node as any)._lastTransistorPin as ('collector'|'emitter'|'base'|undefined);
-          const toPin = (connectedNode as any)._lastTransistorPin as ('collector'|'emitter'|'base'|undefined);
-          let useHorizontalFirst = dxAbs >= dyAbs;
-          if (fromPin) {
-            useHorizontalFirst = fromPin === 'base';
-          } else if (toPin) {
-            useHorizontalFirst = toPin === 'base';
+          const EPS = 1e-6;
+          // If already axis-aligned, draw a single straight segment for a clean line
+          // Except: for hard-10 VCC connections we still want an L-shape
+          if ((dxAbs < EPS || dyAbs < EPS) && !(isHard10 && involvesVCC)) {
+            return (
+              <SchematicWire
+                key={`${node.id}-${connectedId}-axis`}
+                from={[fromConnectionX, fromConnectionY, 0]}
+                to={[toConnectionX, toConnectionY, 0]}
+                isDarkMode={isDarkMode}
+              />
+            );
           }
-          const bendX = useHorizontalFirst ? toConnectionX : fromConnectionX;
-          const bendY = useHorizontalFirst ? fromConnectionY : toConnectionY;
+
+          // Junction-aware bending with special-case for VCC in hard-10:
+          // Always place the elbow at (VCC.x, other.y) so VCC wire exits vertically from the top
+          const fromIsJunction = node.type === 'junction';
+          const toIsJunction = connectedNode.type === 'junction';
+          let bendX: number;
+          let bendY: number;
+
+          if (isHard10 && involvesVCC) {
+            const vccX = node.id === 'VCC' ? fromConnectionX : toConnectionX;
+            const otherY = node.id === 'VCC' ? toConnectionY : fromConnectionY;
+            bendX = vccX;
+            bendY = otherY;
+          } else if (fromIsJunction || toIsJunction) {
+            const junctionX = toIsJunction ? toConnectionX : fromConnectionX;
+            bendX = junctionX;
+            bendY = fromIsJunction ? toConnectionY : fromConnectionY;
+          } else {
+            // Prefer routing aligned with transistor leg when applicable
+            const fromPin = (node as any)._lastTransistorPin as ('collector'|'emitter'|'base'|undefined);
+            const toPin = (connectedNode as any)._lastTransistorPin as ('collector'|'emitter'|'base'|undefined);
+            let useHorizontalFirst = dxAbs >= dyAbs;
+            if (fromPin) {
+              useHorizontalFirst = fromPin === 'base';
+            } else if (toPin) {
+              useHorizontalFirst = toPin === 'base';
+            }
+            bendX = useHorizontalFirst ? toConnectionX : fromConnectionX;
+            bendY = useHorizontalFirst ? fromConnectionY : toConnectionY;
+          }
 
           return [
             <SchematicWire

@@ -6,6 +6,8 @@ export interface CircuitNode {
   type: 'component' | 'junction' | 'terminal';
   connections: string[];
   position: { x: number; y: number };
+  // Optional: lock a node's rendered rotation (radians). Overrides auto-rotation.
+  fixedRotation?: number;
 }
 
 export interface CircuitTemplate {
@@ -13,6 +15,10 @@ export interface CircuitTemplate {
   difficulty: 'easy' | 'medium' | 'hard';
   name: string;
   description: string;
+  // Optional routing preference for wire rendering
+  routing?: 'straight' | 'L';
+  // Optional: disable auto-rotation of components (keep symbols unrotated)
+  disableAutoRotation?: boolean;
   requiredComponents: { type: string; count: number }[];
   targetTopology: CircuitNode[];
   validationRules: {
@@ -377,6 +383,7 @@ export const circuitTemplates: CircuitTemplate[] = [
     difficulty: 'medium',
     name: 'Transistor Switch',
     description: 'Simple transistor switch circuit',
+  routing: 'straight',
     requiredComponents: [
     { type: 'R', count: 1 },
       { type: 'Q', count: 1 },
@@ -431,84 +438,6 @@ export const circuitTemplates: CircuitTemplate[] = [
   },
   // HARD CIRCUITS (10 total)
   {
-    id: 'hard-1',
-    difficulty: 'hard',
-    name: 'Complex Mixed Circuit',
-    description: 'Build a circuit with series and parallel combinations',
-    requiredComponents: [
-      { type: 'R', count: 2 },
-      { type: 'C', count: 1 },
-      { type: 'L', count: 1 }
-    ],
-    targetTopology: [
-      { id: 'A', type: 'terminal', connections: ['R1'], position: { x: 100, y: 200 } },
-      { id: 'R1', type: 'component', connections: ['A', 'J1'], position: { x: 200, y: 200 } },
-      { id: 'J1', type: 'junction', connections: ['R1', 'R2', 'L1'], position: { x: 300, y: 200 } },
-      { id: 'R2', type: 'component', connections: ['J1', 'J2'], position: { x: 400, y: 150 } },
-      { id: 'L1', type: 'component', connections: ['J1', 'J2'], position: { x: 400, y: 250 } },
-      { id: 'J2', type: 'junction', connections: ['R2', 'L1', 'C1'], position: { x: 500, y: 200 } },
-      { id: 'C1', type: 'component', connections: ['J2', 'B'], position: { x: 600, y: 200 } },
-      { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 700, y: 200 } }
-    ],
-    validationRules: {
-      componentCount: {R:2,C:1,L:1}
-    }
-  },
-  {
-    id: 'hard-2',
-    difficulty: 'hard',
-    name: 'Complex Series-Parallel',
-    description: 'Advanced circuit with 5+ components in series-parallel configuration',
-    requiredComponents: [
-      { type: 'R', count: 3 },
-      { type: 'L', count: 1 },
-      { type: 'C', count: 2 }
-    ],
-    targetTopology: [
-      { id: 'A', type: 'terminal', connections: ['R1'], position: { x: 50, y: 200 } },
-      { id: 'R1', type: 'component', connections: ['A', 'J1'], position: { x: 150, y: 200 } },
-      { id: 'J1', type: 'junction', connections: ['R1', 'R2', 'L1'], position: { x: 250, y: 200 } },
-      { id: 'R2', type: 'component', connections: ['J1', 'J2'], position: { x: 350, y: 150 } },
-      { id: 'L1', type: 'component', connections: ['J1', 'J2'], position: { x: 350, y: 250 } },
-      { id: 'J2', type: 'junction', connections: ['R2', 'L1', 'C1'], position: { x: 450, y: 200 } },
-      { id: 'C1', type: 'component', connections: ['J2', 'J3'], position: { x: 550, y: 200 } },
-      { id: 'J3', type: 'junction', connections: ['C1', 'R3', 'C2'], position: { x: 650, y: 200 } },
-      { id: 'R3', type: 'component', connections: ['J3', 'B'], position: { x: 750, y: 150 } },
-      { id: 'C2', type: 'component', connections: ['J3', 'B'], position: { x: 750, y: 250 } },
-      { id: 'B', type: 'terminal', connections: ['R3', 'C2'], position: { x: 850, y: 200 } }
-    ],
-    validationRules: {
-      componentCount: {R:3,L:1,C:2}
-    }
-  },
-  {
-    id: 'hard-3',
-    difficulty: 'hard',
-    name: 'RLC Switched Branches',
-    description: 'RLC circuit with multiple switched branches',
-    requiredComponents: [
-      { type: 'R', count: 2 },
-      { type: 'L', count: 1 },
-      { type: 'C', count: 1 },
-      { type: 'S', count: 2 }
-    ],
-    targetTopology: [
-      { id: 'A', type: 'terminal', connections: ['J1'], position: { x: 100, y: 200 } },
-      { id: 'J1', type: 'junction', connections: ['A', 'S1', 'S2'], position: { x: 200, y: 200 } },
-      { id: 'S1', type: 'component', connections: ['J1', 'R1'], position: { x: 250, y: 150 } },
-      { id: 'S2', type: 'component', connections: ['J1', 'L1'], position: { x: 250, y: 250 } },
-      { id: 'R1', type: 'component', connections: ['S1', 'J2'], position: { x: 350, y: 150 } },
-      { id: 'L1', type: 'component', connections: ['S2', 'J2'], position: { x: 350, y: 250 } },
-      { id: 'J2', type: 'junction', connections: ['R1', 'L1', 'R2'], position: { x: 450, y: 200 } },
-      { id: 'R2', type: 'component', connections: ['J2', 'C1'], position: { x: 550, y: 200 } },
-      { id: 'C1', type: 'component', connections: ['R2', 'B'], position: { x: 650, y: 200 } },
-      { id: 'B', type: 'terminal', connections: ['C1'], position: { x: 750, y: 200 } }
-    ],
-    validationRules: {
-      componentCount: { R: 2, L: 1, C: 1, S: 2 }
-    }
-  },
-  {
     id: 'hard-4',
     difficulty: 'hard',
     name: 'Transistor Amplifier',
@@ -537,87 +466,8 @@ export const circuitTemplates: CircuitTemplate[] = [
       componentCount: { R: 4, C: 2, Q: 1 }
     }
   },
-  {
-    id: 'hard-5',
-    difficulty: 'hard',
-    name: 'Multi-Stage Voltage Divider',
-    description: 'Multi-stage voltage divider with multiple loads',
-    requiredComponents: [
-      { type: 'R', count: 6 }
-    ],
-    targetTopology: [
-      { id: 'VIN', type: 'terminal', connections: ['R1'], position: { x: 100, y: 100 } },
-      { id: 'R1', type: 'component', connections: ['VIN', 'J1'], position: { x: 200, y: 100 } },
-      { id: 'J1', type: 'junction', connections: ['R1', 'R2', 'R4'], position: { x: 300, y: 150 } },
-      { id: 'R2', type: 'component', connections: ['J1', 'J2'], position: { x: 300, y: 200 } },
-      { id: 'R4', type: 'component', connections: ['J1', 'OUT1'], position: { x: 400, y: 150 } },
-      { id: 'J2', type: 'junction', connections: ['R2', 'R3', 'R5'], position: { x: 300, y: 300 } },
-      { id: 'R3', type: 'component', connections: ['J2', 'GND'], position: { x: 300, y: 400 } },
-      { id: 'R5', type: 'component', connections: ['J2', 'J3'], position: { x: 400, y: 300 } },
-      { id: 'J3', type: 'junction', connections: ['R5', 'R6'], position: { x: 500, y: 300 } },
-      { id: 'R6', type: 'component', connections: ['J3', 'OUT2'], position: { x: 500, y: 350 } },
-      { id: 'OUT1', type: 'terminal', connections: ['R4'], position: { x: 450, y: 150 } },
-      { id: 'OUT2', type: 'terminal', connections: ['R6'], position: { x: 500, y: 400 } },
-      { id: 'GND', type: 'terminal', connections: ['R3'], position: { x: 300, y: 450 } }
-    ],
-    validationRules: {
-      componentCount: { R: 6 }
-    }
-  },
-  {
-    id: 'hard-6',
-    difficulty: 'hard',
-    name: 'Bridge Rectifier',
-    description: 'Full-wave bridge rectifier circuit',
-    requiredComponents: [
-      { type: 'D', count: 4 },
-      { type: 'C', count: 1 },
-      { type: 'R', count: 1 }
-    ],
-    targetTopology: [
-      { id: 'AC1', type: 'terminal', connections: ['D1', 'D3'], position: { x: 100, y: 200 } },
-      { id: 'AC2', type: 'terminal', connections: ['D2', 'D4'], position: { x: 100, y: 300 } },
-      { id: 'D1', type: 'component', connections: ['AC1', 'PLUS'], position: { x: 200, y: 150 } },
-      { id: 'D2', type: 'component', connections: ['AC2', 'PLUS'], position: { x: 200, y: 250 } },
-      { id: 'D3', type: 'component', connections: ['AC1', 'MINUS'], position: { x: 300, y: 150 } },
-      { id: 'D4', type: 'component', connections: ['AC2', 'MINUS'], position: { x: 300, y: 250 } },
-      { id: 'PLUS', type: 'junction', connections: ['D1', 'D2', 'R1', 'C1'], position: { x: 400, y: 200 } },
-      { id: 'MINUS', type: 'junction', connections: ['D3', 'D4', 'R1', 'C1'], position: { x: 400, y: 300 } },
-      { id: 'R1', type: 'component', connections: ['PLUS', 'MINUS'], position: { x: 500, y: 200 } },
-      { id: 'C1', type: 'component', connections: ['PLUS', 'MINUS'], position: { x: 500, y: 300 } }
-    ],
-    validationRules: {
-      componentCount: { D: 4, R: 1, C: 1 }
-    }
-  },
-  {
-    id: 'hard-7',
-    difficulty: 'hard',
-    name: 'RC Timing Circuit',
-    description: 'RC timing circuit with LED indicator',
-    requiredComponents: [
-      { type: 'R', count: 2 },
-      { type: 'C', count: 1 },
-      { type: 'S', count: 1 },
-      { type: 'LED', count: 1 },
-      { type: 'Q', count: 1 }
-    ],
-    targetTopology: [
-      { id: 'VCC', type: 'terminal', connections: ['S1', 'R1'], position: { x: 100, y: 100 } },
-      { id: 'S1', type: 'component', connections: ['VCC', 'J1'], position: { x: 150, y: 150 } },
-      { id: 'R1', type: 'component', connections: ['VCC', 'LED1'], position: { x: 200, y: 100 } },
-      { id: 'J1', type: 'junction', connections: ['S1', 'R2', 'C1'], position: { x: 200, y: 200 } },
-      { id: 'R2', type: 'component', connections: ['J1', 'Q1_B'], position: { x: 300, y: 200 } },
-      { id: 'C1', type: 'component', connections: ['J1', 'GND'], position: { x: 200, y: 300 } },
-      { id: 'Q1_B', type: 'junction', connections: ['R2', 'Q1'], position: { x: 400, y: 200 } },
-      { id: 'Q1', type: 'component', connections: ['Q1_B', 'LED1', 'GND'], position: { x: 400, y: 250 } },
-      { id: 'LED1', type: 'component', connections: ['R1', 'Q1'], position: { x: 300, y: 100 } },
-      { id: 'GND', type: 'terminal', connections: ['C1', 'Q1'], position: { x: 300, y: 350 } }
-    ],
-    validationRules: {
-      componentCount: { R: 2, C: 1, S: 1, LED: 1, Q: 1 }
-    }
-  },
+
+
   {
     id: 'hard-8',
     difficulty: 'hard',
@@ -647,63 +497,50 @@ export const circuitTemplates: CircuitTemplate[] = [
     }
   },
   {
-    id: 'hard-9',
-    difficulty: 'hard',
-    name: 'IC with External Passives',
-    description: 'Integrated circuit with external passive components',
-    requiredComponents: [
-      { type: 'IC', count: 1 },
-      { type: 'R', count: 3 },
-      { type: 'C', count: 2 }
-    ],
-    targetTopology: [
-      { id: 'VCC', type: 'terminal', connections: ['IC1_VCC', 'R1'], position: { x: 300, y: 50 } },
-      { id: 'IC1_VCC', type: 'junction', connections: ['VCC', 'IC1'], position: { x: 300, y: 100 } },
-      { id: 'IC1', type: 'component', connections: ['IC1_VCC', 'IC1_IN', 'IC1_OUT', 'IC1_GND'], position: { x: 300, y: 200 } },
-      { id: 'R1', type: 'component', connections: ['VCC', 'IC1_IN'], position: { x: 200, y: 100 } },
-      { id: 'IC1_IN', type: 'junction', connections: ['R1', 'IC1', 'C1'], position: { x: 150, y: 200 } },
-      { id: 'C1', type: 'component', connections: ['IC1_IN', 'IN'], position: { x: 100, y: 200 } },
-      { id: 'IC1_OUT', type: 'junction', connections: ['IC1', 'R2', 'C2'], position: { x: 450, y: 200 } },
-      { id: 'R2', type: 'component', connections: ['IC1_OUT', 'R3'], position: { x: 500, y: 150 } },
-      { id: 'C2', type: 'component', connections: ['IC1_OUT', 'OUT'], position: { x: 500, y: 250 } },
-      { id: 'R3', type: 'component', connections: ['R2', 'IC1_GND'], position: { x: 550, y: 200 } },
-      { id: 'IC1_GND', type: 'junction', connections: ['R3', 'IC1', 'GND'], position: { x: 300, y: 300 } },
-      { id: 'IN', type: 'terminal', connections: ['C1'], position: { x: 50, y: 200 } },
-      { id: 'OUT', type: 'terminal', connections: ['C2'], position: { x: 550, y: 250 } },
-      { id: 'GND', type: 'terminal', connections: ['IC1_GND'], position: { x: 300, y: 350 } }
-    ],
-    validationRules: {
-      componentCount: { IC: 1, R: 3, C: 2 }
-    }
-  },
-  {
     id: 'hard-10',
     difficulty: 'hard',
     name: 'Logic Gate Circuit',
-    description: 'Simple logic gate circuit using diodes and transistors',
+    description: 'DTL (Diode-Transistor Logic) circuit',
+  disableAutoRotation: true,
     requiredComponents: [
-      { type: 'D', count: 2 },
-      { type: 'R', count: 3 },
-      { type: 'Q', count: 1 },
-      { type: 'LED', count: 1 }
+      { type: 'D', count: 3 },
+      { type: 'R', count: 2 },
+      { type: 'Q', count: 1 }
     ],
     targetTopology: [
-      { id: 'A', type: 'terminal', connections: ['D1'], position: { x: 100, y: 150 } },
-      { id: 'B', type: 'terminal', connections: ['D2'], position: { x: 100, y: 250 } },
-      { id: 'D1', type: 'component', connections: ['A', 'J1'], position: { x: 200, y: 150 } },
-      { id: 'D2', type: 'component', connections: ['B', 'J1'], position: { x: 200, y: 250 } },
-      { id: 'J1', type: 'junction', connections: ['D1', 'D2', 'R1'], position: { x: 300, y: 200 } },
-      { id: 'R1', type: 'component', connections: ['J1', 'Q1_B'], position: { x: 400, y: 200 } },
-      { id: 'Q1_B', type: 'junction', connections: ['R1', 'Q1', 'R2'], position: { x: 500, y: 200 } },
-      { id: 'Q1', type: 'component', connections: ['Q1_B', 'R3', 'GND'], position: { x: 500, y: 300 } },
-      { id: 'R2', type: 'component', connections: ['Q1_B', 'GND'], position: { x: 450, y: 250 } },
-      { id: 'R3', type: 'component', connections: ['Q1', 'VCC'], position: { x: 600, y: 200 } },
-      { id: 'VCC', type: 'terminal', connections: ['R3', 'LED1'], position: { x: 700, y: 100 } },
-      { id: 'LED1', type: 'component', connections: ['VCC', 'Q1'], position: { x: 600, y: 150 } },
-      { id: 'GND', type: 'terminal', connections: ['Q1', 'R2'], position: { x: 500, y: 400 } }
+      // Inputs via diodes into base node (wired-AND)
+    { id: 'A', type: 'terminal', connections: ['D1'], position: { x: 100, y: 300 } },
+    { id: 'B', type: 'terminal', connections: ['D2'], position: { x: 100, y: 340 } },
+    { id: 'C', type: 'terminal', connections: ['D3'], position: { x: 100, y: 380 } },
+    { id: 'D1', type: 'component', connections: ['A', 'J_IN'], position: { x: 200, y: 300 } },
+    { id: 'D2', type: 'component', connections: ['B', 'J_IN'], position: { x: 200, y: 340 } },
+  { id: 'D3', type: 'component', connections: ['C', 'J_IN'], position: { x: 200, y: 380 } },
+  { id: 'J_IN', type: 'junction', connections: ['D1', 'D2', 'D3', 'R1', 'Q1'], position: { x: 300, y: 300 } },
+
+      // Bias and collector resistors from VCC
+      { id: 'VCC', type: 'terminal', connections: ['R1', 'R2'], position: { x: 350, y: 60 } },
+  { id: 'R1', type: 'component', connections: ['VCC', 'J_IN'], position: { x: 300, y: 140 }, fixedRotation: 1.5707963267948966 },
+  { id: 'R2', type: 'component', connections: ['VCC', 'J_COL'], position: { x: 400, y: 140 }, fixedRotation: 1.5707963267948966 },
+
+      // Transistor and output
+  { id: 'Q1', type: 'component', connections: ['J_COL', 'GND', 'J_IN'], position: { x: 350, y: 300 } },
+      { id: 'J_COL', type: 'junction', connections: ['R2', 'Q1', 'OUT'], position: { x: 400, y: 220 } },
+      { id: 'OUT', type: 'terminal', connections: ['J_COL'], position: { x: 480, y: 220 } },
+      { id: 'GND', type: 'terminal', connections: ['Q1'], position: { x: 360, y: 400 } }
     ],
     validationRules: {
-      componentCount: { D: 2, Q: 1, R: 3, LED: 1 }
+      componentCount: { D: 3, Q: 1, R: 2 },
+      requiredPlacements: [
+        // Diodes feeding base junction
+        { nodeId: 'D1', expectedType: 'D', position: { x: 200, y: 300 } },
+        { nodeId: 'D2', expectedType: 'D', position: { x: 200, y: 340 } },
+        { nodeId: 'D3', expectedType: 'D', position: { x: 200, y: 380 } },
+        // Bias and collector resistors from VCC
+        { nodeId: 'R1', expectedType: 'R', position: { x: 300, y: 140 } },
+        { nodeId: 'R2', expectedType: 'R', position: { x: 400, y: 140 } },
+        // Transistor location
+        { nodeId: 'Q1', expectedType: 'Q', position: { x: 350, y: 300 } }
+      ]
     }
   }
 ];
@@ -903,7 +740,7 @@ function validateCircuitRules(
 
 // Helper functions for path validation
 function isTerminal(nodeId: string): boolean {
-  return ['A', 'B', 'VCC', 'GND', 'IN', 'OUT', 'VIN', 'AC1', 'AC2', 'PLUS', 'MINUS'].includes(nodeId);
+  return ['A', 'B', 'C', 'VCC', 'GND', 'IN', 'OUT', 'VIN', 'AC1', 'AC2', 'PLUS', 'MINUS'].includes(nodeId);
 }
 
 function validateSeriesPath(connections: Array<{ from: string; to: string }>, path: string[]): boolean {
