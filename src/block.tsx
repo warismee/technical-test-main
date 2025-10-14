@@ -431,41 +431,41 @@ export const Block: React.FC<BlockProps> = ({
   } | null>(null);
   
   // Get the current circuit template based on difficulty (memoized to prevent refresh on component selection)
-  // const currentTemplate = useMemo(() => {
-  //   const template = generateUniqueChallenge(currentDifficulty, shownQuestionIds);
-    
-  //   // Check if game is complete (no more questions available)
-  //   if (template === null) {
-  //     setIsGameComplete(true);
-  //     return null;
-  //   }
-    
-  //   // Add the new question ID to the shown list
-  //   if (!shownQuestionIds.includes(template.id)) {
-  //     setShownQuestionIds(prev => [...prev, template.id]);
-  //   }
-  //   return template;
-  // }, [currentDifficulty, questionsAnswered]);
-
-  // Debug - show specific template (change debugTemplateId to test different templates)
   const currentTemplate = useMemo(() => {
-    const debugTemplateId = "medium-7"; // Change this ID to debug different templates
+    const template = generateUniqueChallenge(currentDifficulty, shownQuestionIds);
     
-    // Find the specific template by ID across all difficulties
-    const debugTemplate = circuitTemplates.find(t => t.id === debugTemplateId);
-    
-    if (debugTemplate) {
-      // Add to shown questions if not already there
-      if (!shownQuestionIds.includes(debugTemplate.id)) {
-        setShownQuestionIds(prev => [...prev, debugTemplate.id]);
-      }
-      return debugTemplate;
+    // Check if game is complete (no more questions available)
+    if (template === null) {
+      setIsGameComplete(true);
+      return null;
     }
     
-    // Fallback to first available template if debug template not found
-    console.warn(`Debug template "${debugTemplateId}" not found, using first available template`);
-    return circuitTemplates[0] || null;
-  }, []); // Empty dependency array to keep it stable for debugging
+    // Add the new question ID to the shown list
+    if (!shownQuestionIds.includes(template.id)) {
+      setShownQuestionIds(prev => [...prev, template.id]);
+    }
+    return template;
+  }, [currentDifficulty, questionsAnswered]);
+
+  // Debug - show specific template (change debugTemplateId to test different templates)
+  // const currentTemplate = useMemo(() => {
+  //   const debugTemplateId = "hard-2"; // Change this ID to debug different templates
+    
+  //   // Find the specific template by ID across all difficulties
+  //   const debugTemplate = circuitTemplates.find(t => t.id === debugTemplateId);
+    
+  //   if (debugTemplate) {
+  //     // Add to shown questions if not already there
+  //     if (!shownQuestionIds.includes(debugTemplate.id)) {
+  //       setShownQuestionIds(prev => [...prev, debugTemplate.id]);
+  //     }
+  //     return debugTemplate;
+  //   }
+    
+  //   // Fallback to first available template if debug template not found
+  //   console.warn(`Debug template "${debugTemplateId}" not found, using first available template`);
+  //   return circuitTemplates[0] || null;
+  // }, []); // Empty dependency array to keep it stable for debugging
 
   // Reset placed components when template changes
   useEffect(() => {
