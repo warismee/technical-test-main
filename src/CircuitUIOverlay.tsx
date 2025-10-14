@@ -1,5 +1,6 @@
 import * as React from "react";
 import { CircuitTemplate } from "./circuitLogic";
+import type { Mission } from "./missionEngine";
 import { MdHome, MdLightMode, MdDarkMode, MdCheck } from "react-icons/md";
 
 interface CircuitUIOverlayProps {
@@ -17,6 +18,27 @@ interface CircuitUIOverlayProps {
   onBackToMenu?: () => void;
   isDarkMode?: boolean;
   onToggleDarkMode?: () => void;
+  // Mission integration (optional)
+  mission?: Mission; // if provided, derives allowed, constraints, title/description automatically
+  allowedComponentTypes?: string[]; // optional simple filter
+  allowedComponents?: { type: string; maxCount?: number }[]; // richer mission spec
+  missionTitle?: string;
+  missionDescription?: string;
+  constraints?: { budget?: number; maxComponents?: number };
+  // Live mission component values (e.g., resistor values), used to show predicted metrics in overlay
+  missionValues?: Record<string, number>;
+  missionUnits?: 'ohm' | 'kOhm';
+  // Optional component property controls
+  componentControls?: Array<{
+    id: string;
+    label: string;
+    unit?: string;
+    value: number;
+    min: number;
+    max: number;
+    step?: number;
+  }>;
+  onComponentControlChange?: (id: string, value: number) => void;
 }
 
 interface Component {
@@ -214,12 +236,33 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
   onBackToMenu,
   isDarkMode = false,
   onToggleDarkMode,
+  mission,
+  allowedComponentTypes,
+  allowedComponents,
+  missionTitle,
+  missionDescription,
+  constraints,
+  missionValues,
+  missionUnits,
+  componentControls,
+  onComponentControlChange,
 }) => {
   const difficulty = currentTemplate.difficulty;
 
   // Determine symbol color based on dark mode
   const symbolColor = isDarkMode ? "#ffffff" : "#333333";
-  const components = getComponentsFromTemplate(currentTemplate, symbolColor);
+  let components = getComponentsFromTemplate(currentTemplate, symbolColor);
+  // Derive mission-driven props when a mission object is provided
+  const derivedAllowedComponents = mission?.allowedComponents ?? allowedComponents;
+  const filterTypes = derivedAllowedComponents?.map((c) => c.type) ?? allowedComponentTypes;
+  if (filterTypes && filterTypes.length > 0) {
+    const allowedSet = new Set(filterTypes);
+    components = components.filter((c) => allowedSet.has(c.type));
+  }
+
+  const derivedConstraints = mission?.constraints ?? constraints;
+  const derivedMissionTitle = mission?.title ?? missionTitle;
+  const derivedMissionDescription = mission?.description ?? missionDescription;
 
   // Handle ESC key to cancel selection
   React.useEffect(() => {
@@ -252,29 +295,8 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
 
   return (
     <div className="absolute inset-0 pointer-events-none">
-      <div className={`absolute top-4 left-4 ${sidebarBg} p-3 rounded-lg shadow-lg pointer-events-auto`}>
-        <div className={`text-sm ${textColor} font-medium`}>
-          <div className="font-bold mb-1">{currentTemplate.name}</div>
-          
-          {/* Current Difficulty Display */}
-          <div className="mb-2">
-            <div className="text-xs mb-1">Difficulty:</div>
-            <div className={`inline-block px-3 py-1 text-xs rounded font-medium ${
-              currentDifficulty === 'easy' 
-                ? 'bg-green-500 text-white' 
-                : currentDifficulty === 'medium'
-                ? 'bg-yellow-500 text-white'
-                : 'bg-red-500 text-white'
-            }`}>
-              {currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}
-            </div>
-            <div className={`text-xs ${textColor} opacity-75 mt-1`}>
-              {currentDifficulty === 'easy' && 'Simple circuits with basic components'}
-              {currentDifficulty === 'medium' && 'More complex circuits with multiple components'}
-              {currentDifficulty === 'hard' && 'Advanced circuits with specialized components'}
-            </div>
-          </div>
-          
+    <div className={`absolute top-4 left-4 ${sidebarBg} p-3 rounded-lg shadow-lg pointer-events-auto`}>
+        <div className={`text-sm ${textColor} font-medium`}>          
           {/* Back to Menu Button */}
           <div className="mb-2">
             <button
@@ -293,9 +315,100 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
           
           <div>Players: {playerCount}</div>
         </div>
-        <div className={`text-xs ${textColor} opacity-75 mt-2`}>
-          {currentTemplate.description}
-        </div>
+        {derivedMissionTitle && (
+          <div className={`text-xs ${textColor} font-semibold mt-2`}>{derivedMissionTitle}</div>
+        )}
+        {derivedMissionDescription && (
+          <div className={`text-xs ${textColor} opacity-75 mt-1`}>
+            {derivedMissionDescription}
+          </div>
+        )}
+        {/* Mission goal status: show target and predicted values for certain mission kinds */}
+        {mission && (
+          <div className={`mt-2 text-xs ${textColor}`}>
+            {mission.goal.kind === 'voltage-threshold' && (
+              <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded p-2`}>
+                <div className="font-medium mb-1">Goal: Voltage Threshold</div>
+                <div>Target: V({mission.goal.params.node}) ≥ {mission.goal.params.minVoltage.toFixed(2)} V{mission.goal.params.supply ? ` (supply ${mission.goal.params.supply} V)` : ''}</div>
+                {(() => {
+                  const vals = missionValues || {};
+                  const R1 = typeof vals['R1'] === 'number' ? vals['R1'] : undefined;
+                  const R2 = typeof vals['R2'] === 'number' ? vals['R2'] : undefined;
+                  if (R1 != null && R2 != null) {
+                    const scale = missionUnits === 'kOhm' ? 1000 : 1;
+                    const supply = mission.goal.params.supply ?? 5;
+                    const vout = supply * ((R2 * scale) / ((R1 * scale) + (R2 * scale)));
+                    const pass = vout >= mission.goal.params.minVoltage;
+                    return (
+                      <div className="mt-1">Predicted: <span className={pass ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>{vout.toFixed(2)} V</span></div>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+            )}
+            {mission.goal.kind === 'led-current-target' && (
+              <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded p-2`}>
+                <div className="font-medium mb-1">Goal: LED Current Target</div>
+                <div>Target: {mission.goal.params.targetCurrent_mA} mA ± {(mission.goal.params.tolerance_mA ?? 2)} mA</div>
+                <div>Supply: {mission.goal.params.supply} V, Vf≈{mission.goal.params.vf ?? 2.0} V</div>
+                {(() => {
+                  const vals = missionValues || {};
+                  const R1 = typeof vals['R1'] === 'number' ? vals['R1'] : undefined;
+                  if (R1 != null) {
+                    const scale = missionUnits === 'kOhm' ? 1000 : 1;
+                    const R = Math.max(1e-3, R1 * scale);
+                    const Vs = mission.goal.params.supply;
+                    const Vf = mission.goal.params.vf ?? 2.0;
+                    const I_mA = Math.max(0, ((Vs - Vf) / R) * 1000);
+                    const target = mission.goal.params.targetCurrent_mA;
+                    const tol = mission.goal.params.tolerance_mA ?? 2;
+                    const pass = Math.abs(I_mA - target) <= tol;
+                    return (
+                      <div className="mt-1">Predicted: <span className={pass ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>{I_mA.toFixed(1)} mA</span></div>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+            )}
+            {mission.goal.kind === 'rlc-resonance-target' && (
+              <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded p-2`}>
+                <div className="font-medium mb-1">Goal: RLC Resonance</div>
+                <div>Target: {Math.round(mission.goal.params.targetFrequencyHz)} Hz ± {Math.round(mission.goal.params.toleranceHz ?? Math.max(1, mission.goal.params.targetFrequencyHz * 0.1))} Hz</div>
+                {(() => {
+                  const vals = missionValues || {};
+                  const LmH = typeof vals['L'] === 'number' ? vals['L'] : (typeof vals['L1'] === 'number' ? vals['L1'] : undefined);
+                  const CuF = typeof vals['C'] === 'number' ? vals['C'] : (typeof vals['C1'] === 'number' ? vals['C1'] : undefined);
+                  if (LmH != null && CuF != null) {
+                    const L_H = Math.max(1e-12, LmH * 1e-3);
+                    const C_F = Math.max(1e-12, CuF * 1e-6);
+                    const f0 = 1 / (2 * Math.PI * Math.sqrt(L_H * C_F));
+                    const target = mission.goal.params.targetFrequencyHz;
+                    const tol = mission.goal.params.toleranceHz ?? Math.max(1, target * 0.1);
+                    const pass = Math.abs(f0 - target) <= tol;
+                    const fmt = (hz: number) => {
+                      if (hz >= 1000) return `${(hz/1000).toFixed(2)} kHz`;
+                      return `${hz.toFixed(0)} Hz`;
+                    };
+                    return (
+                      <div className="mt-1">Predicted: <span className={pass ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>{fmt(f0)}</span></div>
+                    );
+                  }
+                  return (
+                    <div className="mt-1 opacity-75">Set L (mH) and C (µF) in Component Properties to see predicted f₀.</div>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        )}
+        {derivedConstraints?.maxComponents != null && (
+          <div className={`text-xs ${textColor} opacity-75 mt-1`}>Max components: {derivedConstraints.maxComponents}</div>
+        )}
+        {derivedConstraints?.budget != null && (
+          <div className={`text-xs ${textColor} opacity-75`}>Budget: {derivedConstraints.budget}</div>
+        )}
       </div>
 
       {/* Scoreboard */}
@@ -325,8 +438,13 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
         </div>
       </div>
 
-      <div className={`absolute top-4 right-4 transform ${sidebarBg} p-4 rounded-lg shadow-lg pointer-events-auto`}>
+      <div className={`absolute bottom-4 right-4 transform ${sidebarBg} p-4 rounded-lg shadow-lg pointer-events-auto`}>
         <h3 className={`text-sm font-bold ${textColor} mb-2`}>Components</h3>
+    {derivedAllowedComponents && (
+          <div className={`text-xs ${textColor} opacity-75 mb-2`}>
+      Allowed: {derivedAllowedComponents.map(a => `${a.type}${a.maxCount ? `×${a.maxCount}` : ''}`).join(', ')}
+          </div>
+        )}
         {/* <div className={`text-xs ${textColor} opacity-75 mb-2`}>
           Required: {currentTemplate.requiredComponents.map(comp => `${comp.count}×${comp.type}`).join(', ')}
         </div> */}
@@ -348,7 +466,7 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
           ))}
         </div>
         
-        <div className="mt-4 space-y-2">
+  <div className="mt-4 space-y-2">
           {selectedFromParent && (
             <button
               onClick={() => {
@@ -392,6 +510,40 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
           )}
         </div>
       </div>
+
+      {componentControls && componentControls.length > 0 && (
+        <div className={`absolute right-4 top-24 ${sidebarBg} p-3 rounded-lg shadow-lg pointer-events-auto w-64`}>
+          <div className={`text-sm ${textColor} font-bold mb-2`}>Component Properties</div>
+          <div className="space-y-2">
+            {componentControls.map(ctrl => (
+              <div key={ctrl.id} className="text-xs">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-medium">{ctrl.label}</span>
+                  <span className="opacity-70">{ctrl.value}{ctrl.unit ? ` ${ctrl.unit}` : ''}</span>
+                </div>
+                <input
+                  className={`w-full ${isDark ? 'accent-yellow-400' : 'accent-blue-600'}`}
+                  type="range"
+                  min={ctrl.min}
+                  max={ctrl.max}
+                  step={ctrl.step ?? 1}
+                  value={ctrl.value}
+                  onChange={(e) => onComponentControlChange?.(ctrl.id, parseFloat(e.target.value))}
+                />
+                <input
+                  className={`mt-1 w-full px-2 py-1 rounded border ${isDark ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-800'}`}
+                  type="number"
+                  min={ctrl.min}
+                  max={ctrl.max}
+                  step={ctrl.step ?? 1}
+                  value={ctrl.value}
+                  onChange={(e) => onComponentControlChange?.(ctrl.id, parseFloat(e.target.value))}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
 
     </div>

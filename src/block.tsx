@@ -1,8 +1,8 @@
 import React, { Suspense, useState, useMemo, useEffect } from "react";
 import { Html } from "@react-three/drei";
 import { CircuitUIOverlay } from "./CircuitUIOverlay";
-import CircuitSchematic2DScene from "./CircuitSchematic2DScene";
-import { circuitTemplates, generateUniqueChallenge, validateCircuit, getTotalQuestionsForDifficulty } from "./circuitLogic";
+import MissionSchematic2DScene from "./MissionSchematic2DScene";
+import { circuitTemplates, generateUniqueChallenge, validateCircuit, getTotalQuestionsForDifficulty, getMissionForTemplate, getTemplateForMission, generateUniqueMission, getMissionById } from "./missionEngine";
 import { 
   MdLightMode, 
   MdDarkMode, 
@@ -418,6 +418,11 @@ export const Block: React.FC<BlockProps> = ({
   
   // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState(theme === "dark");
+  // Mission-tunable properties (e.g., resistor values in kΩ for divider mission)
+  const [missionComponentValues, setMissionComponentValues] = useState<{ [id: string]: number }>({});
+  // Mission state
+  const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
+  const [shownMissionIds, setShownMissionIds] = useState<string[]>([]);
   
   // Question summary state
   const [showQuestionSummary, setShowQuestionSummary] = useState(false);
@@ -433,19 +438,27 @@ export const Block: React.FC<BlockProps> = ({
   // Get the current circuit template based on difficulty (memoized to prevent refresh on component selection)
   const currentTemplate = useMemo(() => {
     const template = generateUniqueChallenge(currentDifficulty, shownQuestionIds);
-    
-    // Check if game is complete (no more questions available)
+
+    // If template pool is exhausted but we're in mission mode, don't end the game here
     if (template === null) {
-      setIsGameComplete(true);
+      if (!activeMissionId) {
+        setIsGameComplete(true);
+      }
       return null;
     }
-    
+
     // Add the new question ID to the shown list
     if (!shownQuestionIds.includes(template.id)) {
       setShownQuestionIds(prev => [...prev, template.id]);
     }
     return template;
-  }, [currentDifficulty, questionsAnswered]);
+  }, [currentDifficulty, questionsAnswered, activeMissionId]);
+
+  const activeTemplate = useMemo(() => {
+    const missionTemplate = activeMissionId ? getTemplateForMission(activeMissionId) : null;
+    // Fallback to currentTemplate if mission mapping is missing
+    return missionTemplate ?? currentTemplate;
+  }, [currentTemplate, activeMissionId]);
 
   // Debug - show specific template (change debugTemplateId to test different templates)
   // const currentTemplate = useMemo(() => {
@@ -470,7 +483,7 @@ export const Block: React.FC<BlockProps> = ({
   // Reset placed components when template changes
   useEffect(() => {
     setPlacedComponents({});
-  }, [currentTemplate?.id]);
+  }, [activeTemplate?.id]);
 
   // Handle difficulty change
   const handleDifficultyChange = (newDifficulty: "easy" | "medium" | "hard") => {
@@ -495,6 +508,7 @@ export const Block: React.FC<BlockProps> = ({
     setPlacedComponents({});
     setSelectedComponentFromUI(null);
     setShownQuestionIds([]);
+  setShownMissionIds([]);
     setIsGameComplete(false);
     setShowQuestionSummary(false);
     setQuestionSummaryData(null);
@@ -502,6 +516,9 @@ export const Block: React.FC<BlockProps> = ({
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
     setIsGameStarted(true);
+  // Keep currentDifficulty; pick a fresh mission on restart
+  const mission = generateUniqueMission(currentDifficulty, []);
+  setActiveMissionId(mission ? mission.id : null);
   };
 
   // Handle starting the game with selected difficulty
@@ -510,6 +527,7 @@ export const Block: React.FC<BlockProps> = ({
     setPlacedComponents({});
     setSelectedComponentFromUI(null);
     setShownQuestionIds([]);
+    setShownMissionIds([]);
     setIsGameComplete(false);
     setShowQuestionSummary(false);
     setQuestionSummaryData(null);
@@ -517,6 +535,16 @@ export const Block: React.FC<BlockProps> = ({
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
     setIsGameStarted(true);
+
+    // Start with the first available mission for the selected difficulty
+    const mission = generateUniqueMission(selectedDifficulty, []);
+    if (mission) {
+      setActiveMissionId(mission.id);
+      setShownMissionIds([mission.id]);
+    } else {
+      // No missions available for this difficulty; clear mission mode
+      setActiveMissionId(null);
+    }
   };
 
   // Handle changing difficulty from game summary
@@ -525,12 +553,15 @@ export const Block: React.FC<BlockProps> = ({
     setPlacedComponents({});
     setSelectedComponentFromUI(null);
     setShownQuestionIds([]);
+  setShownMissionIds([]);
     setIsGameComplete(false);
     setShowQuestionSummary(false);
     setQuestionSummaryData(null);
     setScore(0);
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
+  const mission = generateUniqueMission(newDifficulty, []);
+  setActiveMissionId(mission ? mission.id : null);
   };
 
   // Handle going back to main menu
@@ -540,11 +571,13 @@ export const Block: React.FC<BlockProps> = ({
     setPlacedComponents({});
     setSelectedComponentFromUI(null);
     setShownQuestionIds([]);
+  setShownMissionIds([]);
     setShowQuestionSummary(false);
     setQuestionSummaryData(null);
     setScore(0);
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
+  setActiveMissionId(null);
   };
 
   // Handle when a component is placed in the circuit
@@ -573,7 +606,7 @@ export const Block: React.FC<BlockProps> = ({
 
   // Handle circuit validation and show summary
   const handleValidateCircuit = () => {
-    if (!currentTemplate) {
+    if (!activeTemplate) {
       console.error('No current template available for validation');
       return;
     }
@@ -581,7 +614,7 @@ export const Block: React.FC<BlockProps> = ({
     // Convert placed components to the format expected by validateCircuit
     const placedComponentsArray = Object.entries(placedComponents).map(([nodeId, componentType]) => {
       // Find the node position from the template
-      const node = currentTemplate.targetTopology.find(n => n.id === nodeId);
+      const node = activeTemplate.targetTopology.find(n => n.id === nodeId);
       return {
         instanceId: nodeId,
         type: componentType,
@@ -593,7 +626,10 @@ export const Block: React.FC<BlockProps> = ({
     // Skip connection validation - only check component placement
     const connections: Array<{ from: string; to: string }> = [];
     
-    const result = validateCircuit(placedComponentsArray, connections, currentTemplate);
+  const result = validateCircuit(placedComponentsArray, connections, activeTemplate, {
+      componentValues: missionComponentValues,
+      units: 'kOhm',
+    });
     
     // Update score and question count
     const newQuestionsAnswered = questionsAnswered + 1;
@@ -632,6 +668,20 @@ export const Block: React.FC<BlockProps> = ({
     // Reset components for next question
     setPlacedComponents({});
     setSelectedComponentFromUI(null);
+    setMissionComponentValues({});
+
+    // Advance to next mission if mission mode is active; otherwise continue template mode
+    if (activeMissionId) {
+      // Try to get next unique mission in same difficulty avoiding shownMissionIds
+      const nextMission = generateUniqueMission(currentDifficulty, shownMissionIds);
+      if (nextMission) {
+        setActiveMissionId(nextMission.id);
+        setShownMissionIds((prev) => [...prev, nextMission.id]);
+      } else {
+        // No more missions; mark game complete
+        setIsGameComplete(true);
+      }
+    }
   };
 
   // Handle dark mode toggle
@@ -655,8 +705,8 @@ export const Block: React.FC<BlockProps> = ({
 
   // Render the current view mode
   const renderCurrentView = () => {
-    // If no current template, show loading or error
-    if (!currentTemplate) {
+  // If no active template (mission/template), show loading or error
+  if (!activeTemplate) {
       return (
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
@@ -669,19 +719,21 @@ export const Block: React.FC<BlockProps> = ({
 
     switch (currentViewMode) {
       case "2d-schematic":
-        return (
+  return (
           <>
-            <CircuitSchematic2DScene 
-              template={currentTemplate}
+            <MissionSchematic2DScene
+        template={activeTemplate!}
+              mission={activeMissionId ? (getMissionById(activeMissionId) ?? undefined) : undefined}
               selectedComponentFromUI={selectedComponentFromUI}
               onComponentPlaced={handleComponentPlaced}
               placedComponents={placedComponents}
               onComponentRemoved={handleComponentRemoved}
               isDarkMode={isDarkMode}
+              onResistorValuesChange={setMissionComponentValues}
             />
             {/* 2D Drag-and-drop Overlay */}
             <CircuitUIOverlay 
-              currentTemplate={currentTemplate} 
+              currentTemplate={activeTemplate!} 
               playerCount={playerCount} 
               theme={currentTheme}
               onComponentSelected={setSelectedComponentFromUI}
@@ -695,6 +747,36 @@ export const Block: React.FC<BlockProps> = ({
               onBackToMenu={handleBackToMenu}
               isDarkMode={isDarkMode}
               onToggleDarkMode={toggleDarkMode}
+              mission={activeMissionId ? (getMissionById(activeMissionId) ?? undefined) : undefined}
+              allowedComponentTypes={(activeMissionId ? getMissionById(activeMissionId)?.allowedComponents : getMissionForTemplate(activeTemplate!)?.allowedComponents)?.map(a => a.type)}
+              allowedComponents={(activeMissionId ? getMissionById(activeMissionId)?.allowedComponents : getMissionForTemplate(activeTemplate!)?.allowedComponents)}
+              missionTitle={activeMissionId ? getMissionById(activeMissionId)?.title : getMissionForTemplate(activeTemplate! )?.title}
+              missionDescription={activeMissionId ? getMissionById(activeMissionId)?.description : getMissionForTemplate(activeTemplate! )?.description}
+              constraints={activeMissionId ? getMissionById(activeMissionId)?.constraints : getMissionForTemplate(activeTemplate! )?.constraints}
+              missionValues={missionComponentValues}
+              missionUnits={'kOhm'}
+              componentControls={(() => {
+                const m = activeMissionId ? getMissionById(activeMissionId) : getMissionForTemplate(activeTemplate!);
+                if (!m) return undefined;
+                if (m.goal.kind === 'led-current-target') {
+                  return [{ id: 'R1', label: 'R1', unit: 'kΩ', value: missionComponentValues['R1'] ?? 1, min: 0.001, max: 1000, step: 0.1 }];
+                }
+                if (m.goal.kind === 'voltage-threshold') {
+                  return [
+                    { id: 'R1', label: 'R1', unit: 'kΩ', value: missionComponentValues['R1'] ?? 1, min: 0.001, max: 1000, step: 0.1 },
+                    { id: 'R2', label: 'R2', unit: 'kΩ', value: missionComponentValues['R2'] ?? 1, min: 0.001, max: 1000, step: 0.1 },
+                  ];
+                }
+                if (m.id === 'mission-rlc-series-1') {
+                  return [
+                    { id: 'R', label: 'R', unit: 'kΩ', value: missionComponentValues['R'] ?? 1, min: 0.001, max: 1000, step: 0.1 },
+                    { id: 'L', label: 'L', unit: 'mH', value: missionComponentValues['L'] ?? 10, min: 0.001, max: 1000, step: 0.1 },
+                    { id: 'C', label: 'C', unit: 'µF', value: missionComponentValues['C'] ?? 1, min: 0.001, max: 1000, step: 0.1 },
+                  ];
+                }
+                return undefined;
+              })()}
+              onComponentControlChange={(id, value) => setMissionComponentValues(prev => ({ ...prev, [id]: value }))}
             />
           </>
         );

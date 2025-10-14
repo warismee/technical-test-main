@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "vite preview check",
+			"type": "shell",
+			"command": "npm run build:dev && npm run preview -- --host --port 5173",
+			"args": [],
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		},
+		{
+			"label": "vite preview check 2",
+			"type": "shell",
+			"command": "npm run build:dev && npm run preview -- --host --port 5175",
+			"args": [],
+			"isBackground": true,
+			"problemMatcher": [
+				"$tsc"
+			],
+			"group": "build"
+		}
+	]
+}
