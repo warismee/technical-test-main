@@ -76,7 +76,7 @@ function QuestionSummary({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className={`${isDarkMode 
         ? 'bg-gray-800/80 text-white backdrop-blur-md' 
-        : 'bg-white/80 backdrop-blur-md'} rounded-lg shadow-xl p-8 max-w-md w-full mx-4 relative`}>
+        : 'bg-white/80 backdrop-blur-md'} rounded-lg shadow-xl padding-8 max-w-md w-full mx-4 relative`}>
         {/* Dark Mode Toggle */}
         {onToggleDarkMode && (
           <button
@@ -208,7 +208,7 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
   <div className={`flex items-center justify-center h-full ${isDarkMode ? 'animated-gradient-dark' : 'animated-gradient-light'}`}>
       <div className={`${isDarkMode 
         ? 'bg-gray-800/80 text-white backdrop-blur-md' 
-        : 'bg-white/80 backdrop-blur-md'} rounded-lg shadow-xl p-8 max-w-md w-full mx-4 relative`}>
+        : 'bg-white/80 backdrop-blur-md'} rounded-lg shadow-xl padding-8 max-w-md w-full mx-4 relative`}>
         {/* Dark Mode Toggle */}
         {onToggleDarkMode && (
           <button
@@ -325,7 +325,7 @@ function DifficultyMenu({ onStartGame, theme, isDarkMode = false, onToggleDarkMo
     <div className={`flex items-center justify-center h-full ${isDarkMode ? 'animated-gradient-dark' : 'animated-gradient-light'}`}>
       <div className={`${isDarkMode 
         ? 'bg-gray-800/80 text-white backdrop-blur-md' 
-        : 'bg-white/80 backdrop-blur-md'} rounded-lg shadow-xl p-8 max-w-2xl w-full mx-4 relative`}>
+        : 'bg-white/80 backdrop-blur-md'} rounded-lg shadow-xl padding-8 max-w-2xl w-full mx-4 relative`}>
         {/* Dark Mode Toggle */}
         {onToggleDarkMode && (
           <button
