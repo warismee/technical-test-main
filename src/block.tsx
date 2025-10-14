@@ -514,7 +514,7 @@ export const Block: React.FC<BlockProps> = ({
     setPlacedComponents({});
     setSelectedComponentFromUI(null);
     setShownQuestionIds([]);
-  setShownMissionIds([]);
+    setShownMissionIds([]);
     setIsGameComplete(false);
     setShowQuestionSummary(false);
     setQuestionSummaryData(null);
@@ -525,6 +525,9 @@ export const Block: React.FC<BlockProps> = ({
   // Keep currentDifficulty; pick a fresh mission on restart
   const mission = generateUniqueMission(currentDifficulty, []);
   setActiveMissionId(mission ? mission.id : null);
+  if (mission) {
+    setShownMissionIds([mission.id]);
+  }
   };
 
   // Handle starting the game with selected difficulty
@@ -559,15 +562,18 @@ export const Block: React.FC<BlockProps> = ({
     setPlacedComponents({});
     setSelectedComponentFromUI(null);
     setShownQuestionIds([]);
-  setShownMissionIds([]);
+    setShownMissionIds([]);
     setIsGameComplete(false);
     setShowQuestionSummary(false);
     setQuestionSummaryData(null);
     setScore(0);
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
-  const mission = generateUniqueMission(newDifficulty, []);
-  setActiveMissionId(mission ? mission.id : null);
+    const mission = generateUniqueMission(newDifficulty, []);
+    setActiveMissionId(mission ? mission.id : null);
+    if (mission) {
+      setShownMissionIds([mission.id]);
+    }
   };
 
   // Handle going back to main menu
@@ -759,6 +765,11 @@ export const Block: React.FC<BlockProps> = ({
               onValidateCircuit={handleValidateCircuit}
               hasPlacedComponents={Object.keys(placedComponents).length > 0}
               score={score}
+              onHintUsed={(penaltyPercent) => {
+                // Apply a one-time 10% deduction on the current score value
+                // Use functional update to avoid stale closures if rapid clicks
+                setScore((prev) => Math.round(prev * (1 - penaltyPercent)));
+              }}
               questionsAnswered={questionsAnswered}
               questionsCorrect={questionsCorrect}
               currentDifficulty={currentDifficulty}

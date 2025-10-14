@@ -13,6 +13,8 @@ interface CircuitUIOverlayProps {
   onValidateCircuit?: () => void;
   hasPlacedComponents?: boolean;
   score?: number;
+  // Called when a player uses a hint; implement deduction in parent if desired
+  onHintUsed?: (penaltyPercent: number) => void;
   questionsAnswered?: number;
   questionsCorrect?: number;
   currentDifficulty?: "easy" | "medium" | "hard";
@@ -247,11 +249,13 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
   missionUnits,
   componentControls,
   onComponentControlChange,
+  onHintUsed,
 }) => {
   const difficulty = currentTemplate.difficulty;
 
   // Local UI state
   const [showHint, setShowHint] = React.useState(false);
+  const [hintPenaltyApplied, setHintPenaltyApplied] = React.useState(false);
 
   // Determine symbol color based on dark mode
   const symbolColor = isDarkMode ? "#ffffff" : "#333333";
@@ -298,6 +302,9 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
     }
   };
 
+  // Score to display locally: if hint was used and parent didn't handle deduction,
+  // apply a local 10% penalty view-only.
+  const displayedScore = showHint && !onHintUsed ? Math.round(score * 0.9) : score;
 
 
   return (
@@ -321,16 +328,37 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
           </div>
           {/* Hint toggle */}
           <div className="mb-2">
-            <button
-              onClick={() => setShowHint((v) => !v)}
-              className={`btn w-full px-3 py-2 text-xs rounded font-medium transition-colors ${
-                isDark
-                  ? (showHint ? 'bg-yellow-600 hover:bg-yellow-700 text-white' : 'bg-gray-600 hover:bg-gray-700 text-white')
-                  : (showHint ? 'bg-yellow-400 hover:bg-yellow-500 text-gray-900' : 'bg-gray-200 hover:bg-gray-300 text-gray-800')
-              }`}
-            >
-              {showHint ? 'Hide Hint' : 'Show Hint'}
-            </button>
+            {!showHint ? (
+              <button
+                onClick={() => {
+                  if (!showHint) {
+                    setShowHint(true);
+                    if (!hintPenaltyApplied) {
+                      setHintPenaltyApplied(true);
+                      onHintUsed?.(0.1); // request parent to deduct 10%
+                    }
+                  }
+                }}
+                className={`btn w-full px-3 py-2 text-xs rounded font-medium transition-colors ${
+                  isDark
+                    ? 'bg-gray-600 hover:bg-gray-700 text-white'
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                }`}
+              >
+                Show Hint (-10%)
+              </button>
+            ) : (
+              <button
+                disabled
+                className={`btn w-full px-3 py-2 text-xs rounded font-medium ${
+                  isDark
+                    ? 'bg-yellow-700 text-white cursor-not-allowed'
+                    : 'bg-yellow-400 text-gray-900 cursor-not-allowed'
+                }`}
+              >
+                Hint Shown (-10%)
+              </button>
+            )}
           </div>
           
           <div>Players: {playerCount}</div>
@@ -343,8 +371,8 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
             {derivedMissionDescription}
           </div>
         )}
-        {/* Mission goal status: show target and predicted values for certain mission kinds */}
-    {showHint && missionToShow && (
+    {/* Mission goal status: show target and predicted values only after hint is used */}
+  {showHint && missionToShow && (
           <div className={`mt-2 text-xs ${textColor}`}>
       {missionToShow.goal.kind === 'voltage-threshold' && (
               <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded p-2`}>
@@ -441,14 +469,18 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
           </div>
           {(() => {
             const vals = missionValues || {};
-            const L = typeof vals['L1'] === 'number' ? vals['L1'] : undefined;
-            const C = typeof vals['C1'] === 'number' ? vals['C1'] : undefined;
-            if (L != null && C != null) {
-              // Assume inputs are already SI units: L in henries, C in farads
-              const Lval = Math.max(0, L);
-              const Cval = Math.max(0, C);
-              if (Lval > 0 && Cval > 0) {
-                const f0 = 1 / (2 * Math.PI * Math.sqrt(Lval * Cval));
+            const hasL1 = typeof vals['L1'] === 'number';
+            const hasC1 = typeof vals['C1'] === 'number';
+            const hasL = typeof vals['L'] === 'number';
+            const hasC = typeof vals['C'] === 'number';
+            if ((hasL1 || hasL) && (hasC1 || hasC)) {
+              // Prefer SI inputs L1 (H) and C1 (F); otherwise accept L (mH) and C (µF) from block controls
+              const Lraw = (hasL1 ? vals['L1'] : vals['L']) as number;
+              const Craw = (hasC1 ? vals['C1'] : vals['C']) as number;
+              const L_SI = Math.max(0, hasL1 ? Lraw : Lraw * 1e-3); // mH -> H when using L
+              const C_SI = Math.max(0, hasC1 ? Craw : Craw * 1e-6); // µF -> F when using C
+              if (L_SI > 0 && C_SI > 0) {
+                const f0 = 1 / (2 * Math.PI * Math.sqrt(L_SI * C_SI));
                 const target = missionToShow.goal.params.targetFrequencyHz;
                 const tol = missionToShow.goal.params.toleranceHz ?? 10;
                 const pass = Math.abs(f0 - target) <= tol;
@@ -477,7 +509,7 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
         <div className={`text-xs ${textColor} space-y-1`}>
           <div className="flex justify-between">
             <span>Score:</span>
-            <span className="font-semibold text-blue-600">{score}</span>
+            <span className="font-semibold text-blue-600">{displayedScore}</span>
           </div>
           <div className="flex justify-between">
             <span>Questions:</span>
