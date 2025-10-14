@@ -372,26 +372,6 @@ export const circuitTemplates: CircuitTemplate[] = [
   {
     id: 'medium-6',
     difficulty: 'medium',
-    name: 'Mixed Series-Parallel',
-    description: 'Mixed series-parallel circuit with 3 components',
-    requiredComponents: [
-      { type: 'R', count: 2 },
-      { type: 'L', count: 1 }
-    ],
-    targetTopology: [
-      { id: 'A', type: 'terminal', connections: ['R1'], position: { x: 100, y: 200 } },
-      { id: 'R1', type: 'component', connections: ['A', 'R2', 'L1'], position: { x: 200, y: 200 } },
-      { id: 'R2', type: 'component', connections: ['R1', 'B'], position: { x: 400, y: 150 } },
-      { id: 'L1', type: 'component', connections: ['R1', 'B'], position: { x: 400, y: 250 } },
-      { id: 'B', type: 'terminal', connections: ['R2', 'L1'], position: { x: 500, y: 200 } }
-    ],
-    validationRules: {
-      componentCount: {R:2, L:1}
-    }
-  },
-  {
-    id: 'medium-7',
-    difficulty: 'medium',
     name: 'Transistor Switch',
     description: 'Simple transistor switch circuit',
   routing: 'straight',
@@ -423,7 +403,7 @@ export const circuitTemplates: CircuitTemplate[] = [
     }
   },
   {
-    id: 'medium-8',
+    id: 'medium-7',
     difficulty: 'medium',
     name: 'RC Low-Pass Filter',
     description: 'Simple low-pass filter using RC components',
@@ -535,7 +515,7 @@ export const circuitTemplates: CircuitTemplate[] = [
   { id: 'Q1', type: 'component', connections: ['J_COL', 'GND', 'J_IN'], position: { x: 350, y: 300 } },
       { id: 'J_COL', type: 'junction', connections: ['R2', 'Q1', 'OUT'], position: { x: 400, y: 220 } },
       { id: 'OUT', type: 'terminal', connections: ['J_COL'], position: { x: 480, y: 220 } },
-      { id: 'GND', type: 'terminal', connections: ['Q1'], position: { x: 360, y: 400 } }
+      { id: 'GND', type: 'terminal', connections: ['Q1'], position: { x: 362, y: 400 } }
     ],
     validationRules: {
       componentCount: { D: 3, Q: 1, R: 2 },
