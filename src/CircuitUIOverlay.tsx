@@ -250,6 +250,9 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
 }) => {
   const difficulty = currentTemplate.difficulty;
 
+  // Local UI state
+  const [showHint, setShowHint] = React.useState(false);
+
   // Determine symbol color based on dark mode
   const symbolColor = isDarkMode ? "#ffffff" : "#333333";
   let components = getComponentsFromTemplate(currentTemplate, symbolColor);
@@ -316,6 +319,19 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
               </span>
             </button>
           </div>
+          {/* Hint toggle */}
+          <div className="mb-2">
+            <button
+              onClick={() => setShowHint((v) => !v)}
+              className={`btn w-full px-3 py-2 text-xs rounded font-medium transition-colors ${
+                isDark
+                  ? (showHint ? 'bg-yellow-600 hover:bg-yellow-700 text-white' : 'bg-gray-600 hover:bg-gray-700 text-white')
+                  : (showHint ? 'bg-yellow-400 hover:bg-yellow-500 text-gray-900' : 'bg-gray-200 hover:bg-gray-300 text-gray-800')
+              }`}
+            >
+              {showHint ? 'Hide Hint' : 'Show Hint'}
+            </button>
+          </div>
           
           <div>Players: {playerCount}</div>
         </div>
@@ -328,7 +344,7 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
           </div>
         )}
         {/* Mission goal status: show target and predicted values for certain mission kinds */}
-    {missionToShow && (
+    {showHint && missionToShow && (
           <div className={`mt-2 text-xs ${textColor}`}>
       {missionToShow.goal.kind === 'voltage-threshold' && (
               <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded p-2`}>
@@ -414,6 +430,36 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
                   return null;
                 })()}
               </div>
+      )}
+
+      {/* RLC Resonance Target Goal */}
+      {missionToShow.goal.kind === 'rlc-resonance-target' && (
+        <div className={`${isDark ? 'bg-gray-700' : 'bg-gray-100'} rounded p-2`}>
+          <div className="font-medium mb-1">Goal: RLC Resonance Frequency</div>
+          <div>
+            Target: f₀ = {missionToShow.goal.params.targetFrequencyHz} Hz ± {missionToShow.goal.params.toleranceHz ?? 10} Hz
+          </div>
+          {(() => {
+            const vals = missionValues || {};
+            const L = typeof vals['L1'] === 'number' ? vals['L1'] : undefined;
+            const C = typeof vals['C1'] === 'number' ? vals['C1'] : undefined;
+            if (L != null && C != null) {
+              // Assume inputs are already SI units: L in henries, C in farads
+              const Lval = Math.max(0, L);
+              const Cval = Math.max(0, C);
+              if (Lval > 0 && Cval > 0) {
+                const f0 = 1 / (2 * Math.PI * Math.sqrt(Lval * Cval));
+                const target = missionToShow.goal.params.targetFrequencyHz;
+                const tol = missionToShow.goal.params.toleranceHz ?? 10;
+                const pass = Math.abs(f0 - target) <= tol;
+                return (
+                  <div className="mt-1">Predicted: <span className={pass ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>{f0.toFixed(1)} Hz</span></div>
+                );
+              }
+            }
+            return null;
+          })()}
+        </div>
             )}
           </div>
         )}

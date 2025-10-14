@@ -119,7 +119,7 @@ export default function MissionSchematic2DScene({
       />
 
       {/* Mission header (from mission/template) */}
-      <div className={`absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-md shadow ${
+      <div className={`absolute top-4 right-4  px-4 py-2 rounded-md shadow ${
         isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"
       }`}>
         <div className="text-sm font-semibold text-center">{MISSION_TITLE}</div>
