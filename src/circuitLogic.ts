@@ -256,10 +256,12 @@ export const circuitTemplates: CircuitTemplate[] = [
       { type: 'C', count: 1 }
     ],
     targetTopology: [
-      { id: 'A', type: 'terminal', connections: ['R1', 'C1'], position: { x: 100, y: 200 } },
-      { id: 'R1', type: 'component', connections: ['A', 'B'], position: { x: 200, y: 150 } },
-      { id: 'C1', type: 'component', connections: ['A', 'B'], position: { x: 200, y: 250 } },
-      { id: 'B', type: 'terminal', connections: ['R1', 'C1'], position: { x: 300, y: 200 } }
+      { id: 'A', type: 'terminal', connections: ['J1'], position: { x: 100, y: 200 } },
+      { id: 'J1', type: 'junction', connections: ['A', 'R1', 'C2'], position: { x: 150, y: 200 } },
+      { id: 'R1', type: 'component', connections: ['J1','J2'], position: { x: 200, y: 150 } },
+      { id: 'C1', type: 'component', connections: ['J1','J2'], position: { x: 200, y: 250 } },
+      { id: 'J2', type: 'junction', connections: ['A', 'R1', 'C2'], position: { x: 250, y: 200 } },
+      { id: 'B', type: 'terminal', connections: ['J2'], position: { x: 300, y: 200 } }
     ],
     validationRules: {
       componentCount: {R:1,C:1}
@@ -334,7 +336,7 @@ export const circuitTemplates: CircuitTemplate[] = [
     }
   },
   {
-    id: 'medium-6',
+    id: 'medium-5',
     difficulty: 'medium',
     name: 'Wheatstone Bridge',
     description: 'Basic Wheatstone bridge circuit',
@@ -364,7 +366,7 @@ export const circuitTemplates: CircuitTemplate[] = [
     }
   },
   {
-    id: 'medium-7',
+    id: 'medium-6',
     difficulty: 'medium',
     name: 'Mixed Series-Parallel',
     description: 'Mixed series-parallel circuit with 3 components',
@@ -384,7 +386,7 @@ export const circuitTemplates: CircuitTemplate[] = [
     }
   },
   {
-    id: 'medium-8',
+    id: 'medium-7',
     difficulty: 'medium',
     name: 'Transistor Switch',
     description: 'Simple transistor switch circuit',
@@ -417,7 +419,7 @@ export const circuitTemplates: CircuitTemplate[] = [
     }
   },
   {
-    id: 'medium-10',
+    id: 'medium-8',
     difficulty: 'medium',
     name: 'RC Low-Pass Filter',
     description: 'Simple low-pass filter using RC components',
@@ -443,7 +445,7 @@ export const circuitTemplates: CircuitTemplate[] = [
   },
 //Hard
   {
-    id: 'hard-8',
+    id: 'hard-1',
     difficulty: 'hard',
     name: 'Oscillator Circuit',
     description: 'RC oscillator circuit with feedback',
@@ -500,7 +502,7 @@ export const circuitTemplates: CircuitTemplate[] = [
     }
   },
   {
-    id: 'hard-10',
+    id: 'hard-2',
     difficulty: 'hard',
     name: 'Logic Gate Circuit',
     description: 'DTL (Diode-Transistor Logic) circuit',
