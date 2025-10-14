@@ -299,11 +299,13 @@ export const circuitTemplates: CircuitTemplate[] = [
       { type: 'C', count: 1 }
     ],
     targetTopology: [
-      { id: 'A', type: 'terminal', connections: ['R1', 'L1', 'C1'], position: { x: 100, y: 200 } },
-      { id: 'R1', type: 'component', connections: ['A', 'B'], position: { x: 200, y: 150 } },
-      { id: 'L1', type: 'component', connections: ['A', 'B'], position: { x: 200, y: 200 } },
-      { id: 'C1', type: 'component', connections: ['A', 'B'], position: { x: 200, y: 250 } },
-      { id: 'B', type: 'terminal', connections: ['R1', 'L1', 'C1'], position: { x: 300, y: 200 } }
+      { id: 'A', type: 'terminal', connections: ['J1'], position: { x: 100, y: 200 } },
+      { id: 'J1', type: 'junction', connections: ['A', 'R1', 'C2','L1'], position: { x: 150, y: 200 } },
+      { id: 'R1', type: 'component', connections: ['J1', 'J2'], position: { x: 200, y: 150 } },
+      { id: 'L1', type: 'component', connections: ['J1', 'J2'], position: { x: 200, y: 200 } },
+      { id: 'C1', type: 'component', connections: ['J1', 'J2'], position: { x: 200, y: 250 } },
+      { id: 'J2', type: 'junction', connections: ['B', 'R1', 'C2','L1'], position: { x: 250, y: 200 } },
+      { id: 'B', type: 'terminal', connections: ['J2'], position: { x: 300, y: 200 } }
     ],
     validationRules: {
       componentCount: {R:1,L:1,C:1}
