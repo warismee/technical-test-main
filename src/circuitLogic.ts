@@ -324,10 +324,12 @@ export const circuitTemplates: CircuitTemplate[] = [
     targetTopology: [
       { id: 'A', type: 'terminal', connections: ['S1'], position: { x: 30, y: 200 } },
       { id: 'S1', type: 'component', connections: ['A', 'R1'], position: { x: 100, y: 200 } },
-      { id: 'R1', type: 'component', connections: ['S1', 'C1', 'R2'], position: { x: 200, y: 200 } },
-      { id: 'C1', type: 'component', connections: ['R1', 'GND'], position: { x: 320, y: 150 } },
-      { id: 'R2', type: 'component', connections: ['R1', 'GND'], position: { x: 320, y: 250 } },
-      { id: 'GND', type: 'terminal', connections: ['C1', 'R2'], position: { x: 400, y: 200 } }
+      { id: 'J1', type: 'junction', connections: ['R1', 'C1', 'R2'], position: { x: 250, y: 200 } },
+      { id: 'R1', type: 'component', connections: ['J1','S1'], position: { x: 200, y: 200 } },
+      { id: 'C1', type: 'component', connections: ['J1', 'J2'], position: { x: 320, y: 150 } },
+      { id: 'R2', type: 'component', connections: ['J1', 'J2'], position: { x: 320, y: 250 } },
+      { id: 'J2', type: 'junction', connections: ['GND', 'C1', 'R2'], position: { x: 380, y: 200 } },
+      { id: 'GND', type: 'terminal', connections: ['J2'], position: { x: 400, y: 200 } }
     ],
     validationRules: {
       componentCount: { S: 1, R: 2, C: 1 },

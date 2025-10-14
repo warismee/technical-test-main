@@ -571,23 +571,30 @@ export default function CircuitSchematic2D({
           let bendX: number;
           let bendY: number;
 
-          const isHard8 = template.id === 'hard-8';
+          // Template-specific flags
+          const isOscillator = template.id === 'hard-8' || !!template.name?.toLowerCase().includes('oscillator');
           const isInToJout =
             (node.id === 'IN-' && connectedId === 'J_OUT') ||
             (node.id === 'J_OUT' && connectedId === 'IN-');
+          const isMedium4 = template.id === 'medium-4';
 
           if (isHard10 && involvesVCC) {
             const vccX = node.id === 'VCC' ? fromConnectionX : toConnectionX;
             const otherY = node.id === 'VCC' ? toConnectionY : fromConnectionY;
             bendX = vccX;
             bendY = otherY;
-          } else if (isHard8 && isInToJout) {
+          } else if (isOscillator && isInToJout) {
             // For hard-8, force L-shape from IN- to J_OUT: horizontal from IN- then vertical at J_OUT.x
             // Choose elbow at (J_OUT.x, IN-.y)
             const jOutX = node.id === 'J_OUT' ? fromConnectionX : toConnectionX;
             const inMinusY = node.id === 'IN-' ? fromConnectionY : toConnectionY;
             bendX = jOutX;
             bendY = inMinusY;
+          } else if (isMedium4 && (node.id === 'C1' || connectedId === 'C1')) {
+            // For medium-4, flip the L orientation for any connection involving C1
+            // Use elbow at (to.x, from.y) to get the opposite bend from default
+            bendX = toConnectionX;
+            bendY = fromConnectionY;
           } else if (fromIsJunction || toIsJunction) {
             const junctionX = toIsJunction ? toConnectionX : fromConnectionX;
             bendX = junctionX;
