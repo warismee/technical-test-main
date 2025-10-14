@@ -249,7 +249,7 @@ export default function CircuitSchematic2D({
             <SchematicJunction 
               key={node.id}
               position={position}
-      label={['J1','J2','J3'].includes(node.id) ? node.id : undefined}
+    //   label={['J1','J2','J3'].includes(node.id) ? node.id : undefined}
               isDarkMode={isDarkMode}
             />
           );

@@ -204,15 +204,18 @@ export const circuitTemplates: CircuitTemplate[] = [
     difficulty: 'easy',
     name: 'Three Resistor Parallel',
     description: 'Connect three resistors in parallel',
+  routing: 'L',
     requiredComponents: [
       { type: 'R', count: 3 }
     ],
     targetTopology: [
-      { id: 'A', type: 'terminal', connections: ['R1', 'R2', 'R3'], position: { x: 100, y: 200 } },
+      { id: 'A', type: 'terminal', connections: ['J1'], position: { x: 100, y: 200 } },
+      { id: 'J1', type: 'junction', connections: ['A', 'R1','R2','R3'], position: { x: 130, y: 200 } },
       { id: 'R1', type: 'component', connections: ['A', 'B'], position: { x: 200, y: 150 } },
       { id: 'R2', type: 'component', connections: ['A', 'B'], position: { x: 200, y: 200 } },
       { id: 'R3', type: 'component', connections: ['A', 'B'], position: { x: 200, y: 250 } },
-      { id: 'B', type: 'terminal', connections: ['R1', 'R2', 'R3'], position: { x: 300, y: 200 } }
+      { id: 'J2', type: 'junction', connections: ['R1', 'R2', 'R3', 'B'], position: { x: 280, y: 200 } },
+      { id: 'B', type: 'terminal', connections: ['J2'], position: { x: 300, y: 200 } }
     ],
     validationRules: {
       componentCount: {R:3}
