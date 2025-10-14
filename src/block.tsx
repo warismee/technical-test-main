@@ -2,7 +2,7 @@ import React, { Suspense, useState, useMemo, useEffect } from "react";
 import { Html } from "@react-three/drei";
 import { CircuitUIOverlay } from "./CircuitUIOverlay";
 import MissionSchematic2DScene from "./MissionSchematic2DScene";
-import { circuitTemplates, generateUniqueChallenge, validateCircuit, getTotalQuestionsForDifficulty, getMissionForTemplate, getTemplateForMission, generateUniqueMission, getMissionById } from "./missionEngine";
+import { circuitTemplates, generateUniqueChallenge, validateCircuit, getMissionForTemplate, getTemplateForMission, generateUniqueMission, getMissionById, getTotalMissionsForDifficulty } from "./missionEngine";
 import { 
   MdLightMode, 
   MdDarkMode, 
@@ -145,7 +145,7 @@ function QuestionSummary({
             className="w-full py-3 px-6 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors"
           >
             <span className="flex items-center justify-center gap-2">
-              Continue to Next Question <MdArrowForward />
+              Continue to Next Mission <MdArrowForward />
             </span>
           </button>
         </div>
@@ -167,7 +167,7 @@ interface GameSummaryProps {
 }
 
 function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, onRestart, onChangeDifficulty, onBackToMenu, isDarkMode = false, onToggleDarkMode }: GameSummaryProps) {
-  const totalQuestions = getTotalQuestionsForDifficulty(difficulty);
+  const totalMissions = getTotalMissionsForDifficulty(difficulty);
   const accuracy = questionsAnswered > 0 ? Math.round((questionsCorrect / questionsAnswered) * 100) : 0;
   const averageScore = questionsAnswered > 0 ? Math.round(score / questionsAnswered) : 0;
 
@@ -223,7 +223,7 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
           <h2 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-2 flex items-center justify-center gap-2`}>
             <IoSparkles className="text-yellow-500" /> Game Complete!
           </h2>
-          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-6`}>You've completed all {totalQuestions} {difficulty} circuit challenges!</p>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-6`}>You've completed all {totalMissions} {difficulty} missions!</p>
           
           <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-6 mb-6`}>
             <div className="grid grid-cols-2 gap-4 text-center">
@@ -355,7 +355,7 @@ function DifficultyMenu({ onStartGame, theme, isDarkMode = false, onToggleDarkMo
                   {getDifficultyDescription(diff)}
                 </div>
                 <div className="mt-4 text-sm font-semibold">
-                  {getTotalQuestionsForDifficulty(diff)} Questions
+                  {getTotalMissionsForDifficulty(diff)} Missions
                 </div>
               </button>
             </div>
@@ -366,10 +366,10 @@ function DifficultyMenu({ onStartGame, theme, isDarkMode = false, onToggleDarkMo
           <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4`}>
             <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-2`}>How to Play:</h3>
             <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} space-y-1`}>
-              <p>• Select the blank component in the circuit</p>
-              <p>• Select the correct components to complete each circuit</p>
-              <p>• Click "Submit" to check your solution</p>
-              <p>• Earn points for correct answers and track your progress</p>
+              <p>• Pick parts to fill the blank slots in the schematic</p>
+              <p>• Use the right components and values to satisfy the mission goal</p>
+              <p>• Click "Submit" to validate your mission</p>
+              <p>• Earn points for completed missions and track your progress</p>
             </div>
           </div>
         </div>
@@ -722,7 +722,7 @@ export const Block: React.FC<BlockProps> = ({
       return (
         <div className="flex items-center justify-center h-full">
           <div className="text-center">
-            <div className="text-lg text-gray-600 mb-4">No more questions available</div>
+            <div className="text-lg text-gray-600 mb-4">No more missions available</div>
             <div className="text-sm text-gray-500">Game should be complete</div>
           </div>
         </div>
@@ -835,7 +835,7 @@ export const Block: React.FC<BlockProps> = ({
       {/* Render the current view */}
       {renderCurrentView()}
       
-      {/* Question Summary Modal */}
+  {/* Mission Summary Modal */}
       {showQuestionSummary && questionSummaryData && (
         <QuestionSummary
           isValid={questionSummaryData.isValid}

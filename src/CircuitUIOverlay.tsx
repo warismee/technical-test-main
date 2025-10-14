@@ -284,6 +284,8 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
   const componentHover = isDark ? "hover:bg-gray-600" : "hover:bg-blue-200";
   const textColor = isDark ? "text-white" : "text-gray-800";
   const borderColor = isDark ? "border-gray-600" : "border-gray-400";
+  // Disable component property controls until a component has been placed
+  const controlsDisabled = !hasPlacedComponents;
 
   const handleComponentClick = (component: Component) => {
     if (selectedFromParent === component.type) {
@@ -534,21 +536,23 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
                   <span className="opacity-70">{ctrl.value}{ctrl.unit ? ` ${ctrl.unit}` : ''}</span>
                 </div>
                 <input
-                  className={`w-full ${isDark ? 'accent-yellow-400' : 'accent-blue-600'}`}
+                  className={`w-full ${isDark ? 'accent-yellow-400' : 'accent-blue-600'} ${controlsDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                   type="range"
                   min={ctrl.min}
                   max={ctrl.max}
                   step={ctrl.step ?? 1}
                   value={ctrl.value}
+                  disabled={controlsDisabled}
                   onChange={(e) => onComponentControlChange?.(ctrl.id, parseFloat(e.target.value))}
                 />
                 <input
-                  className={`mt-1 w-full px-2 py-1 rounded border ${isDark ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-800'}`}
+                  className={`mt-1 w-full px-2 py-1 rounded border ${isDark ? 'bg-gray-900 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-800'} ${controlsDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                   type="number"
                   min={ctrl.min}
                   max={ctrl.max}
                   step={ctrl.step ?? 1}
                   value={ctrl.value}
+                  disabled={controlsDisabled}
                   onChange={(e) => onComponentControlChange?.(ctrl.id, parseFloat(e.target.value))}
                 />
               </div>

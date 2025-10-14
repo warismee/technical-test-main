@@ -145,7 +145,7 @@ export default function MissionSchematic2DScene({
       </div>
 
   {/* Resistor value controls and predicted Vout (values in kΩ) — shown for voltage-threshold missions */}
-      {mission?.goal?.kind === 'voltage-threshold' && (
+      {/* {mission?.goal?.kind === 'voltage-threshold' && (
         <div className={`absolute right-4 top-28 px-3 py-2 rounded-md shadow ${
           isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
         }`}>
@@ -188,17 +188,17 @@ export default function MissionSchematic2DScene({
             <div className="opacity-70">Supply: {supplyVoltage}V</div>
             <div>
               Predicted Vout: {predictedVout !== null ? (
-                <span className={`font-semibold ${predictedVout >= (mission?.goal?.kind === 'voltage-threshold' ? (mission.goal.params as any).minVoltage ?? 0 : 0) ? 'text-green-600' : 'text-red-600'}`}>{predictedVout.toFixed(2)} V</span>
+                <span className={`font-semibold ${predictedVout >= ((mission.goal.params as any).minVoltage ?? 0) ? 'text-green-600' : 'text-red-600'}`}>{predictedVout.toFixed(2)} V</span>
               ) : (
                 <span className="opacity-60">—</span>
               )}
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* LED current tuning controls (values in kΩ) — shown for led-current-target missions */}
-      {mission?.goal?.kind === 'led-current-target' && (
+      {/* {mission?.goal?.kind === 'led-current-target' && (
         <div className={`absolute right-4 top-28 px-3 py-2 rounded-md shadow ${
           isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'
         }`}>
@@ -239,7 +239,7 @@ export default function MissionSchematic2DScene({
             })()}
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }
