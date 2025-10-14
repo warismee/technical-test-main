@@ -74,7 +74,9 @@ function QuestionSummary({
 }: QuestionSummaryProps) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-lg shadow-xl p-8 max-w-md w-full mx-4 relative`}>
+      <div className={`${isDarkMode 
+        ? 'bg-gray-800/80 text-white backdrop-blur-md' 
+        : 'bg-white/80 backdrop-blur-md'} rounded-lg shadow-xl p-8 max-w-md w-full mx-4 relative`}>
         {/* Dark Mode Toggle */}
         {onToggleDarkMode && (
           <button
@@ -203,8 +205,10 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
   };
 
   return (
-    <div className={`flex items-center justify-center h-full ${isDarkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-blue-50 to-indigo-100'}`}>
-      <div className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-lg shadow-xl p-8 max-w-md w-full mx-4 relative`}>
+  <div className={`flex items-center justify-center h-full ${isDarkMode ? 'animated-gradient-dark' : 'animated-gradient-light'}`}>
+      <div className={`${isDarkMode 
+        ? 'bg-gray-800/80 text-white backdrop-blur-md' 
+        : 'bg-white/80 backdrop-blur-md'} rounded-lg shadow-xl p-8 max-w-md w-full mx-4 relative`}>
         {/* Dark Mode Toggle */}
         {onToggleDarkMode && (
           <button
@@ -318,8 +322,10 @@ function DifficultyMenu({ onStartGame, theme, isDarkMode = false, onToggleDarkMo
   };
 
   return (
-    <div className={`flex items-center justify-center h-full ${isDarkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-blue-50 to-indigo-100'}`}>
-      <div className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-lg shadow-xl p-8 max-w-2xl w-full mx-4 relative`}>
+    <div className={`flex items-center justify-center h-full ${isDarkMode ? 'animated-gradient-dark' : 'animated-gradient-light'}`}>
+      <div className={`${isDarkMode 
+        ? 'bg-gray-800/80 text-white backdrop-blur-md' 
+        : 'bg-white/80 backdrop-blur-md'} rounded-lg shadow-xl p-8 max-w-2xl w-full mx-4 relative`}>
         {/* Dark Mode Toggle */}
         {onToggleDarkMode && (
           <button
