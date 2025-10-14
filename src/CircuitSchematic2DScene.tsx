@@ -535,7 +535,7 @@ export default function CircuitSchematic2D({
             );
           }
 
-          // Respect global straight routing unless we must force L for VCC in hard-10
+          // Respect global straight routing unless we must force special-cases
           const useGlobalStraight = template.routing === 'straight' && !(isHard10 && involvesVCC);
           if (useGlobalStraight) {
             return (
@@ -546,6 +546,33 @@ export default function CircuitSchematic2D({
                 isDarkMode={isDarkMode}
               />
             );
+          }
+
+          // Wheatstone Bridge (medium-5): draw short pin stubs at diamond corners (A,B,C,D)
+          const isMedium5 = template.id === 'medium-5' || template.name?.toLowerCase().includes('wheatstone');
+          const involvesDiamondCorner = ['A','B','C','D'].includes(node.id) || ['A','B','C','D'].includes(connectedId);
+          if (isMedium5 && involvesDiamondCorner) {
+            const dx = toConnectionX - fromConnectionX;
+            const dy = toConnectionY - fromConnectionY;
+            const len = Math.hypot(dx, dy) || 1;
+            const nx = dx / len;
+            const ny = dy / len;
+            const stubLen = 0.7; // world units
+
+            return [
+              <SchematicWire
+                key={`${node.id}-${connectedId}-stub1`}
+                from={[fromConnectionX, fromConnectionY, 0]}
+                to={[fromConnectionX + nx * stubLen, fromConnectionY + ny * stubLen, 0]}
+                isDarkMode={isDarkMode}
+              />,
+              <SchematicWire
+                key={`${node.id}-${connectedId}-stub2`}
+                from={[toConnectionX, toConnectionY, 0]}
+                to={[toConnectionX - nx * stubLen, toConnectionY - ny * stubLen, 0]}
+                isDarkMode={isDarkMode}
+              />
+            ];
           }
 
           const dxAbs = Math.abs(fromConnectionX - toConnectionX);
