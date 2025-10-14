@@ -107,10 +107,12 @@ export const circuitTemplates: CircuitTemplate[] = [
       { type: 'C', count: 2 }
     ],
     targetTopology: [
-      { id: 'A', type: 'terminal', connections: ['C1', 'C2'], position: { x: 100, y: 200 } },
-      { id: 'C1', type: 'component', connections: ['A', 'B'], position: { x: 200, y: 150 } },
-      { id: 'C2', type: 'component', connections: ['A', 'B'], position: { x: 200, y: 250 } },
-      { id: 'B', type: 'terminal', connections: ['C1', 'C2'], position: { x: 300, y: 200 } }
+      { id: 'A', type: 'terminal', connections: ['J1'], position: { x: 100, y: 200 } },
+      { id: 'J1', type: 'junction', connections: ['A', 'C1', 'C2'], position: { x: 150, y: 200 } },
+      { id: 'C1', type: 'component', connections: ['J1', 'J2'], position: { x: 200, y: 150 } },
+      { id: 'C2', type: 'component', connections: ['J1', 'J2'], position: { x: 200, y: 250 } },
+      { id: 'J2', type: 'junction', connections: ['B', 'C1', 'C2'], position: { x: 250, y: 200 } },
+      { id: 'B', type: 'terminal', connections: ['J2'], position: { x: 300, y: 200 } }
     ],
     validationRules: {
       componentCount: {C:2}
