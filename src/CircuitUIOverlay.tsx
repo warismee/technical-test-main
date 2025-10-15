@@ -265,6 +265,10 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
     if (hintMeta?.count && hintMeta.count >= 1) {
       setShowHint(true);
       setHintPenaltyApplied(true);
+    } else if ((hintMeta?.count ?? 0) === 0) {
+      // Reset local view when shared hint usage resets (new mission)
+      setShowHint(false);
+      setHintPenaltyApplied(false);
     }
   }, [hintMeta?.count]);
 

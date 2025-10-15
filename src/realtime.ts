@@ -215,6 +215,13 @@ export function useRealtimeGame({ roomId, initialScore = 0 }: UseRealtimeOptions
     });
   }, [update]);
 
+  // Reset hint usage (per-mission reset)
+  const resetHintMeta = useCallback(() => {
+    update(() => ({
+      hintMeta: { count: 0, lastPenaltyPercent: 0, lastAt: 0 }
+    }));
+  }, [update]);
+
   const updatePresence = useCallback((patch: Partial<PeerPresence>) => {
     update(prev => ({
       presence: {
@@ -285,6 +292,7 @@ export function useRealtimeGame({ roomId, initialScore = 0 }: UseRealtimeOptions
   setMissionValues,
   patchMissionValue,
   applyHintPenalty,
+  resetHintMeta,
   publishQuestionSummary,
   clearQuestionSummary,
   };

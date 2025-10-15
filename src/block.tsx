@@ -414,7 +414,7 @@ export const Block: React.FC<BlockProps> = ({
   // Scoreboard state (local personal score)
   const [score, setScore] = useState(0);
   // Realtime shared state (aggregate + presence + mission + placements)
-  const { sharedScore, sharedQuestionsAnswered, sharedQuestionsCorrect, adjustSharedScore, incrementSharedQuestionsAnswered, incrementSharedQuestionsCorrect, setPersonalScore, peers, isConnected, missionId, setMissionId, placed, patchPlaced, missionValues, patchMissionValue, hintMeta, applyHintPenalty, questionSummary: sharedQuestionSummary, publishQuestionSummary, clearQuestionSummary } = useRealtimeGame({ roomId, initialScore: 0 });
+  const { sharedScore, sharedQuestionsAnswered, sharedQuestionsCorrect, adjustSharedScore, incrementSharedQuestionsAnswered, incrementSharedQuestionsCorrect, setPersonalScore, peers, isConnected, missionId, setMissionId, placed, patchPlaced, missionValues, patchMissionValue, hintMeta, applyHintPenalty, resetHintMeta, questionSummary: sharedQuestionSummary, publishQuestionSummary, clearQuestionSummary } = useRealtimeGame({ roomId, initialScore: 0 });
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [questionsCorrect, setQuestionsCorrect] = useState(0);
   
@@ -556,6 +556,8 @@ export const Block: React.FC<BlockProps> = ({
   setActiveMissionIdLocal(mission ? mission.id : null);
   if (mission) {
     setShownMissionIds([mission.id]);
+    // Reset hint for new mission across clients
+    resetHintMeta();
   }
   };
 
@@ -581,6 +583,8 @@ export const Block: React.FC<BlockProps> = ({
       setShownMissionIds([mission.id]);
       // Sync for all players
       setMissionId(mission.id);
+  // Reset hint usage at start of mission
+  resetHintMeta();
     } else {
       // No missions; clear mission mode for all
       setActiveMissionIdLocal(null);
@@ -605,6 +609,7 @@ export const Block: React.FC<BlockProps> = ({
   setActiveMissionIdLocal(mission ? mission.id : null);
     if (mission) {
       setShownMissionIds([mission.id]);
+      resetHintMeta();
     }
   };
 
@@ -718,6 +723,8 @@ export const Block: React.FC<BlockProps> = ({
         setShownMissionIds((prev) => [...prev, nextMission.id]);
         // Sync mission selection for all players
         setMissionId(nextMission.id);
+  // Reset hint usage for the new mission across clients
+  resetHintMeta();
       } else {
         // No more missions; mark game complete
         setIsGameComplete(true);
