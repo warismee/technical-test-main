@@ -551,6 +551,11 @@ export const Block: React.FC<BlockProps> = ({
   // Clear shared placements and mission values for the new mission
   setPlaced({});
   setMissionValues({});
+    // Sync mission selection for all players
+    setMissionId(mission.id);
+  } else {
+    // No missions available; broadcast game-complete state
+    setMissionId(null);
   }
   };
 
@@ -609,6 +614,11 @@ export const Block: React.FC<BlockProps> = ({
   // Clear shared placements and mission values for the new mission
   setPlaced({});
   setMissionValues({});
+      // Sync for all players
+      setMissionId(mission.id);
+    } else {
+      // Nothing to play at this difficulty; reflect across clients
+      setMissionId(null);
     }
   };
 
@@ -626,6 +636,8 @@ export const Block: React.FC<BlockProps> = ({
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
   setActiveMissionIdLocal(null);
+  // Clear shared mission for everyone when returning to menu
+  setMissionId(null);
   };
 
   // Handle when a component is placed in the circuit
@@ -746,6 +758,15 @@ export const Block: React.FC<BlockProps> = ({
         setSelectedComponentFromUI(null);
         setMissionComponentValues({});
         setShownMissionIds((prev) => prev.includes(missionId) ? prev : [...prev, missionId]);
+      } else {
+        // If shared mission is cleared, all clients should enter game-complete
+        setPlacedComponents({});
+        setSelectedComponentFromUI(null);
+        setMissionComponentValues({});
+        setIsGameComplete(true);
+        // Close any open summaries locally to avoid overlap
+        setShowQuestionSummary(false);
+        setQuestionSummaryData(null);
       }
     }
   }, [missionId]);
