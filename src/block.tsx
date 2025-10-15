@@ -161,9 +161,10 @@ interface GameSummaryProps {
   onBackToMenu: () => void;
   isDarkMode?: boolean;
   onToggleDarkMode?: () => void;
+  playerCount?: number;
 }
 
-function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, onRestart, onChangeDifficulty, onBackToMenu, isDarkMode = false, onToggleDarkMode }: GameSummaryProps) {
+function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, onRestart, onChangeDifficulty, onBackToMenu, isDarkMode = false, onToggleDarkMode, playerCount = 1 }: GameSummaryProps) {
   const totalMissions = getTotalMissionsForDifficulty(difficulty);
   const accuracy = questionsAnswered > 0 ? Math.round((questionsCorrect / questionsAnswered) * 100) : 0;
   const averageScore = questionsAnswered > 0 ? Math.round(score / questionsAnswered) : 0;
@@ -257,17 +258,19 @@ function GameSummary({ score, questionsAnswered, questionsCorrect, difficulty, o
               </span>
             </button>
             
-            <div className="flex gap-2">
-              {(['easy', 'medium', 'hard'] as const).filter(d => d !== difficulty).map(diff => (
-                <button
-                  key={diff}
-                  onClick={() => onChangeDifficulty(diff)}
-                  className={`btn flex-1 py-2 px-3 rounded-lg text-white font-medium transition-colors ${getDifficultyColor(diff)}`}
-                >
-                  Try {diff.charAt(0).toUpperCase() + diff.slice(1)}
-                </button>
-              ))}
-            </div>
+            {playerCount === 1 && (
+              <div className="flex gap-2">
+                {(['easy', 'medium', 'hard'] as const).filter(d => d !== difficulty).map(diff => (
+                  <button
+                    key={diff}
+                    onClick={() => onChangeDifficulty(diff)}
+                    className={`btn flex-1 py-2 px-3 rounded-lg text-white font-medium transition-colors ${getDifficultyColor(diff)}`}
+                  >
+                    Try {diff.charAt(0).toUpperCase() + diff.slice(1)}
+                  </button>
+                ))}
+              </div>
+            )}
             
             <button
               onClick={onBackToMenu}
@@ -1183,7 +1186,8 @@ export const Block: React.FC<BlockProps> = ({
         onChangeDifficulty={handleChangeDifficultyFromSummary}
         onBackToMenu={handleBackToMenu}
         isDarkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
+  onToggleDarkMode={toggleDarkMode}
+  playerCount={selectedPlayerCount}
       />
     );
   }
