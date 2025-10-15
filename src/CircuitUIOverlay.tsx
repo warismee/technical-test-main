@@ -260,6 +260,14 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
   const [showHint, setShowHint] = React.useState(false);
   const [hintPenaltyApplied, setHintPenaltyApplied] = React.useState(false);
 
+  // If another peer already used a hint, reflect it locally and disable toggle
+  React.useEffect(() => {
+    if (hintMeta?.count && hintMeta.count >= 1) {
+      setShowHint(true);
+      setHintPenaltyApplied(true);
+    }
+  }, [hintMeta?.count]);
+
   // Determine symbol color based on dark mode
   const symbolColor = isDarkMode ? "#ffffff" : "#333333";
   let components = getComponentsFromTemplate(currentTemplate, symbolColor);
@@ -334,11 +342,18 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
               </span>
             </button>
           </div>
-          {/* Hint toggle */}
+          {/* Hint control (mirrors Component Properties UX) */}
           <div className="mb-2">
-            {!showHint ? (
+            <div className="text-xs flex items-center justify-between mb-1">
+              <span className={isDarkMode ? 'text-white' : 'opacity-70'}>Hint</span>
+              <span className={isDarkMode ? 'text-white' : 'opacity-70'}>
+                {hintMeta?.count && hintMeta.count >= 1 ? 'Shown (-10%)' : (showHint ? 'Shown (-10%)' : 'Hidden')}
+              </span>
+            </div>
+            {(!showHint && !(hintMeta?.count && hintMeta.count >= 1)) ? (
               <button
                 onClick={() => {
+                  if (controlsDisabled) return; // same gating as component controls
                   if (!showHint) {
                     setShowHint(true);
                     if (!hintPenaltyApplied) {
@@ -347,11 +362,13 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
                     }
                   }
                 }}
+                disabled={controlsDisabled}
                 className={`btn w-full px-3 py-2 text-xs rounded font-medium transition-colors ${
-                  isDark
-                    ? 'bg-gray-600 hover:bg-gray-700 text-white'
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
+                  controlsDisabled
+                    ? (isDark ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-gray-100 text-gray-400 cursor-not-allowed')
+                    : (isDark ? 'bg-gray-600 hover:bg-gray-700 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800')
                 }`}
+                title={controlsDisabled ? 'Place a component to unlock hint' : 'Reveal goal details (-10%)'}
               >
                 Show Hint (-10%)
               </button>
@@ -366,6 +383,11 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
               >
                 Hint Shown (-10%)
               </button>
+            )}
+            {lastPenaltyPercent != null && (
+              <div className={`mt-1 text-[11px] ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                Last Penalty: -{Math.round((lastPenaltyPercent) * 100)}%{lastHintAgoSec != null ? ` • ${lastHintAgoSec}s ago` : ''}
+              </div>
             )}
           </div>
           
@@ -651,7 +673,7 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
 
 
       {/* Inject synced hint usage panel (top-center) */}
-      <div className={`absolute top-4 left-1/2 -translate-x-1/2 ${sidebarBg} px-4 py-2 rounded-lg shadow pointer-events-auto`}>        
+      {/* <div className={`absolute top-4 left-1/2 -translate-x-1/2 ${sidebarBg} px-4 py-2 rounded-lg shadow pointer-events-auto`}>        
         <div className={`text-xs ${textColor} flex flex-col items-center`}>          
           <span className="font-semibold">Hints Used: {hintsUsed}</span>
           {lastPenaltyPercent != null && (
@@ -661,7 +683,7 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
             <span className="opacity-60 text-[10px]">Last hint {lastHintAgoSec}s ago</span>
           )}
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

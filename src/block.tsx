@@ -768,6 +768,7 @@ export const Block: React.FC<BlockProps> = ({
               onValidateCircuit={handleValidateCircuit}
               hasPlacedComponents={Object.keys(placedComponents).length > 0}
               score={score}
+              hintMeta={hintMeta}
               onHintUsed={(penaltyPercent) => {
                 // Local personal score penalty
                 setScore((prev) => Math.round(prev * (1 - penaltyPercent)));
@@ -821,14 +822,14 @@ export const Block: React.FC<BlockProps> = ({
               }}
             />
             {/* Shared realtime meta (aggregate score & hints) */}
-            <div className="absolute top-2 left-2 text-xs px-3 py-2 rounded bg-black/50 text-white backdrop-blur-sm space-y-1 shadow">
+            {/* <div className="absolute top-2 left-2 text-xs px-3 py-2 rounded bg-black/50 text-white backdrop-blur-sm space-y-1 shadow">
               <div>Shared Score: <span className="font-semibold">{sharedScore}</span></div>
               <div>Hints Used (room): {hintMeta?.count ?? 0}</div>
               {hintMeta?.lastPenaltyPercent ? (
                 <div className="opacity-70">Last Penalty: {Math.round((hintMeta.lastPenaltyPercent)*100)}%</div>
               ) : null}
               <div className={`mt-1 h-2 rounded ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} title={isConnected ? 'Connected' : 'Disconnected'} />
-            </div>
+            </div> */}
           </>
         );
     }
