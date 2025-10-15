@@ -289,6 +289,8 @@ interface DifficultyMenuProps {
   theme: string;
   isDarkMode?: boolean;
   onToggleDarkMode?: () => void;
+  playerCount: number;
+  onPlayerCountChange: (count: number) => void;
 }
 
 // Waiting Room UI shown until expected players join
@@ -392,7 +394,7 @@ function WaitingRoom({ roomId, totalPlayers, expectedPlayers, isDarkMode = false
   );
 }
 
-function DifficultyMenu({ onStartGame, theme, isDarkMode = false, onToggleDarkMode }: DifficultyMenuProps) {
+function DifficultyMenu({ onStartGame, theme, isDarkMode = false, onToggleDarkMode, playerCount, onPlayerCountChange }: DifficultyMenuProps) {
   const getDifficultyColor = (diff: "easy" | "medium" | "hard") => {
     switch (diff) {
       case 'easy': return 'bg-green-500 hover:bg-green-600 border-green-300';
@@ -442,6 +444,37 @@ function DifficultyMenu({ onStartGame, theme, isDarkMode = false, onToggleDarkMo
             <FaBolt className="text-yellow-500" /> Circuit Challenge
           </h1>
           <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'} text-lg`}>Choose your difficulty level to begin the circuit building challenge!</p>
+        </div>
+        {/* Player count selector */}
+        <div className="mb-6">
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={() => onPlayerCountChange(1)}
+              className={`px-4 py-2 rounded-lg border transition-colors ${
+                playerCount === 1
+                  ? 'bg-blue-500 text-white border-blue-400'
+                  : isDarkMode
+                  ? 'bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600'
+                  : 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200'
+              }`}
+              aria-pressed={playerCount === 1}
+            >
+              1 Player
+            </button>
+            <button
+              onClick={() => onPlayerCountChange(2)}
+              className={`px-4 py-2 rounded-lg border transition-colors ${
+                playerCount === 2
+                  ? 'bg-blue-500 text-white border-blue-400'
+                  : isDarkMode
+                  ? 'bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600'
+                  : 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200'
+              }`}
+              aria-pressed={playerCount === 2}
+            >
+              2 Players
+            </button>
+          </div>
         </div>
         
         <div className="grid gap-6 md:grid-cols-3">
@@ -505,6 +538,8 @@ export const Block: React.FC<BlockProps> = ({
   
   // Scoreboard state (local personal score)
   const [score, setScore] = useState(0);
+  // Player count selection (1 or 2 players)
+  const [selectedPlayerCount, setSelectedPlayerCount] = useState<number>(playerCount ?? 1);
   // Waiting room + room id + host role
   // Initialize room/waiting state from URL (joiners go straight to waiting room)
   const initialRoomFromUrl = ((): string | null => {
@@ -515,7 +550,7 @@ export const Block: React.FC<BlockProps> = ({
   const [currentRoomId, setCurrentRoomId] = useState<string>(initialRoomFromUrl ?? roomId);
   const [isWaitingRoom, setIsWaitingRoom] = useState(!!initialRoomFromUrl);
   const [isHost, setIsHost] = useState(false);
-  const expectedPlayers = 2; // wait until exactly 2 players are connected
+  const expectedPlayers = selectedPlayerCount; // wait until selected number of players are connected
 
   // Realtime shared state (aggregate + presence + mission + placements)
   const { sharedScore, sharedQuestionsAnswered, sharedQuestionsCorrect, adjustSharedScore, incrementSharedQuestionsAnswered, incrementSharedQuestionsCorrect, setPersonalScore, peers, isConnected, missionId, setMissionId, placed, setPlaced, patchPlaced, missionValues, setMissionValues, patchMissionValue, hintMeta, applyHintPenalty, resetHintMeta, questionSummary: sharedQuestionSummary, publishQuestionSummary, clearQuestionSummary } = useRealtimeGame({ roomId: currentRoomId, initialScore: 0 });
@@ -688,21 +723,43 @@ export const Block: React.FC<BlockProps> = ({
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
 
-    // Generate a unique room id that encodes difficulty and enter waiting room as host
-    const baseId = (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
-      ? (crypto as any).randomUUID()
-      : Math.random().toString(36).slice(2, 10);
-    const newRoomId = `${selectedDifficulty}-${baseId}`;
-    setCurrentRoomId(newRoomId);
-    setIsWaitingRoom(true);
-    setIsHost(true);
-    setIsGameStarted(false);
-
-    // Optionally update URL for easier sharing
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      url.searchParams.set('room', newRoomId);
-      window.history.replaceState({}, '', url.toString());
+    if (selectedPlayerCount === 1) {
+      // Single-player: start immediately with a mission, no waiting room
+      const mission = generateUniqueMission(selectedDifficulty, []);
+      setActiveMissionIdLocal(mission ? mission.id : null);
+      if (mission) {
+        setShownMissionIds([mission.id]);
+        resetHintMeta();
+        setPlaced({});
+        setMissionValues({});
+        setMissionId(mission.id);
+      } else {
+        setMissionId(null);
+      }
+      setIsWaitingRoom(false);
+      setIsHost(true);
+      setIsGameStarted(true);
+      // Remove room param for solo mode
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('room');
+        window.history.replaceState({}, '', url.toString());
+      }
+    } else {
+      // Two-player: create a room and enter waiting room as host
+      const baseId = (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
+        ? (crypto as any).randomUUID()
+        : Math.random().toString(36).slice(2, 10);
+      const newRoomId = `${selectedDifficulty}-${baseId}`;
+      setCurrentRoomId(newRoomId);
+      setIsWaitingRoom(true);
+      setIsHost(true);
+      setIsGameStarted(false);
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('room', newRoomId);
+        window.history.replaceState({}, '', url.toString());
+      }
     }
   };
 
@@ -893,6 +950,7 @@ export const Block: React.FC<BlockProps> = ({
       setIsWaitingRoom(true);
       setIsHost(false);
       setIsGameStarted(false);
+  setSelectedPlayerCount(2);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1012,7 +1070,7 @@ export const Block: React.FC<BlockProps> = ({
             {/* 2D Drag-and-drop Overlay */}
             <CircuitUIOverlay 
               currentTemplate={activeTemplate!} 
-              playerCount={playerCount} 
+              playerCount={selectedPlayerCount} 
               theme={currentTheme}
               isHost={isHost}
               onComponentSelected={setSelectedComponentFromUI}
@@ -1106,7 +1164,9 @@ export const Block: React.FC<BlockProps> = ({
         onStartGame={handleStartGame}
         theme={currentTheme}
         isDarkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
+  onToggleDarkMode={toggleDarkMode}
+  playerCount={selectedPlayerCount}
+  onPlayerCountChange={setSelectedPlayerCount}
       />
     );
   }
