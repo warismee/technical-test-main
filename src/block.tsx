@@ -811,20 +811,24 @@ export const Block: React.FC<BlockProps> = ({
     let newQuestionsCorrect = questionsCorrect;
     
     if (result.isValid) {
-  newScore = score + result.score;
-  newQuestionsCorrect = questionsCorrect + 1;
+      // Apply hint penalty to awarded points if a hint was used
+      const usedPenalty = (hintMeta?.count ?? 0) > 0 ? (hintMeta?.lastPenaltyPercent ?? 0) : 0;
+      const awarded = Math.max(0, Math.round(result.score * (1 - usedPenalty)));
+      newScore = score + awarded;
+      newQuestionsCorrect = questionsCorrect + 1;
       setScore(newScore);
       setQuestionsCorrect(newQuestionsCorrect);
       // Realtime: add to shared aggregate & update own personal score in presence map
-      adjustSharedScore(result.score);
+      adjustSharedScore(awarded);
       setPersonalScore(newScore);
-  incrementSharedQuestionsCorrect();
+      incrementSharedQuestionsCorrect();
     }
     
     // Show question summary instead of alert
     const summaryPayload = {
       isValid: result.isValid,
-      score: result.score,
+      // Show the awarded points (after any hint penalty) if valid
+      score: result.isValid ? Math.max(0, Math.round(result.score * (1 - ((hintMeta?.count ?? 0) > 0 ? (hintMeta?.lastPenaltyPercent ?? 0) : 0)))) : result.score,
       errors: result.errors,
       totalScore: newScore,
       questionsCorrect: newQuestionsCorrect,
@@ -1018,9 +1022,7 @@ export const Block: React.FC<BlockProps> = ({
               score={sharedScore}
               hintMeta={hintMeta}
               onHintUsed={(penaltyPercent) => {
-                // Local personal score penalty
-                setScore((prev) => Math.round(prev * (1 - penaltyPercent)));
-                // Shared aggregate penalty synced across players
+                // Record hint usage; actual deduction applied on next awarded points
                 applyHintPenalty(penaltyPercent);
               }}
               questionsAnswered={sharedQuestionsAnswered}

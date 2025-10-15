@@ -199,15 +199,15 @@ export function useRealtimeGame({ roomId, initialScore = 0 }: UseRealtimeOptions
   const applyHintPenalty = useCallback((penaltyPercent: number) => {
     if (penaltyPercent <= 0 || penaltyPercent >= 1) return;
     update(prev => {
-      // Idempotency: only allow one hint usage per room
-      if (prev.hintMeta && prev.hintMeta.count >= 1) {
+      // Idempotency: only allow one hint usage per mission/room until reset
+      const prevHint = prev.hintMeta ?? { count: 0, lastPenaltyPercent: 0, lastAt: 0 };
+      if (prevHint.count >= 1) {
         return {} as Partial<RealtimeState>;
       }
-      const deduction = Math.round(prev.sharedScore * penaltyPercent);
+      // Record hint usage; actual score reduction is applied when awarding points
       return {
-        sharedScore: Math.max(0, prev.sharedScore - deduction),
         hintMeta: {
-          count: prev.hintMeta.count + 1,
+          count: prevHint.count + 1,
           lastPenaltyPercent: penaltyPercent,
           lastAt: Date.now(),
         }
