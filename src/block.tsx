@@ -33,12 +33,12 @@ interface BlockProps {
   autoRotate?: boolean;
   cameraPosition?: [number, number, number];
   use3DCircuit?: boolean;
-  viewMode?: "2d-schematic" | "3d-realistic";
+  viewMode?: "2d-schematic";
   showControls?: boolean;
   roomId?: string; // realtime room id
 }
 
-type ViewMode = "2d-schematic" | "3d-realistic";
+type ViewMode = "2d-schematic";
 
 
 
@@ -398,9 +398,7 @@ export const Block: React.FC<BlockProps> = ({
   roomId = 'circuit-room'
 }) => {
   // State for managing view mode internally
-  const [currentViewMode, setCurrentViewMode] = useState<ViewMode>(
-    use3DCircuit ? "3d-realistic" : initialViewMode
-  );
+  const [currentViewMode, setCurrentViewMode] = useState<ViewMode>(initialViewMode);
 
   // State to manage component selection between UI overlay and circuit scene
   const [selectedComponentFromUI, setSelectedComponentFromUI] = useState<string | null>(null);
