@@ -306,9 +306,15 @@ function WaitingRoom({ roomId, totalPlayers, expectedPlayers, isDarkMode = false
     ? `${window.location.origin}${window.location.pathname}?room=${roomId}`
     : `?room=${roomId}`;
 
+  // Toast state for copy feedback
+  const [copied, setCopied] = useState(false);
+
   const copyInvite = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      // Auto-hide after 2 seconds
+      setTimeout(() => setCopied(false), 2000);
     } catch (_) {}
   };
 
@@ -369,6 +375,19 @@ function WaitingRoom({ roomId, totalPlayers, expectedPlayers, isDarkMode = false
           </div>
         </div>
       </div>
+      {/* Copy toast */}
+      {copied && (
+        <div
+          className={`fixed bottom-6 right-6 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 transition-opacity duration-200 ${
+            isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-900 text-white'
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          <MdContentCopy />
+          <span>Invite link copied</span>
+        </div>
+      )}
     </div>
   );
 }
