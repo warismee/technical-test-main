@@ -5,6 +5,9 @@ import { useCollabSpace, getUserId, generateNewUserId } from '@mexty/realtime';
 export interface RealtimeState {
   // Persisted global game score (aggregate for this room)
   sharedScore: number;
+  // Persisted global questions stats (aggregate for this room)
+  sharedQuestionsAnswered: number;
+  sharedQuestionsCorrect: number;
   // Current active mission shared across players
   missionId: string | null;
   // Placed components: nodeId -> component type
@@ -26,6 +29,17 @@ export interface RealtimeState {
   }>;
   // Optionally track how many missions completed globally
   missionsCompleted: number;
+  // Shared validation/summary dialog payload (null when closed)
+  questionSummary: {
+    isValid: boolean;
+    score: number;
+    errors: string[];
+    totalScore: number;
+    questionsCorrect: number;
+    questionsAnswered: number;
+    at: number;
+    by: string;
+  } | null;
 }
 
 export interface PeerPresence {
@@ -60,11 +74,14 @@ export function useRealtimeGame({ roomId, initialScore = 0 }: UseRealtimeOptions
 
   const initialState: RealtimeState = {
     sharedScore: initialScore,
+  sharedQuestionsAnswered: 0,
+  sharedQuestionsCorrect: 0,
   missionId: null,
   placed: {},
   missionValues: {},
   hintMeta: { count: 0, lastPenaltyPercent: 0, lastAt: 0 },
     missionsCompleted: 0,
+  questionSummary: null,
     presence: {
       [uid]: {
         name: randomName(),
@@ -114,6 +131,18 @@ export function useRealtimeGame({ roomId, initialScore = 0 }: UseRealtimeOptions
     update(prev => ({
       sharedScore: prev.sharedScore + delta,
       presence: { ...prev.presence }
+    }));
+  }, [update]);
+
+  const incrementSharedQuestionsAnswered = useCallback(() => {
+    update(prev => ({
+      sharedQuestionsAnswered: prev.sharedQuestionsAnswered + 1
+    }));
+  }, [update]);
+
+  const incrementSharedQuestionsCorrect = useCallback(() => {
+    update(prev => ({
+      sharedQuestionsCorrect: prev.sharedQuestionsCorrect + 1
     }));
   }, [update]);
 
@@ -199,6 +228,29 @@ export function useRealtimeGame({ roomId, initialScore = 0 }: UseRealtimeOptions
     }));
   }, [userId, update]);
 
+  // Publish a shared question summary (opens modal for all)
+  const publishQuestionSummary = useCallback((payload: {
+    isValid: boolean;
+    score: number;
+    errors: string[];
+    totalScore: number;
+    questionsCorrect: number;
+    questionsAnswered: number;
+  }) => {
+    update(() => ({
+      questionSummary: {
+        ...payload,
+        at: Date.now(),
+        by: userId,
+      }
+    }));
+  }, [update, userId]);
+
+  // Clear shared question summary (closes modal for all)
+  const clearQuestionSummary = useCallback(() => {
+    update(() => ({ questionSummary: null }));
+  }, [update]);
+
   const peers: PeerPresence[] = useMemo(() => Object.entries(state.presence).map(([id, p]) => ({
     id,
     name: p.name,
@@ -213,12 +265,17 @@ export function useRealtimeGame({ roomId, initialScore = 0 }: UseRealtimeOptions
     userId,
     peers,
     sharedScore: state.sharedScore,
+  sharedQuestionsAnswered: state.sharedQuestionsAnswered,
+  sharedQuestionsCorrect: state.sharedQuestionsCorrect,
   missionId: state.missionId,
   placed: state.placed,
   missionValues: state.missionValues,
   hintMeta: state.hintMeta,
+  questionSummary: state.questionSummary,
     missionsCompleted: state.missionsCompleted,
     adjustSharedScore,
+    incrementSharedQuestionsAnswered,
+    incrementSharedQuestionsCorrect,
     setPersonalScore,
     incrementMissionsCompleted,
     updatePresence,
@@ -228,5 +285,7 @@ export function useRealtimeGame({ roomId, initialScore = 0 }: UseRealtimeOptions
   setMissionValues,
   patchMissionValue,
   applyHintPenalty,
+  publishQuestionSummary,
+  clearQuestionSummary,
   };
 }

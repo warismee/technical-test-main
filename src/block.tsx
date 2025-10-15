@@ -414,7 +414,7 @@ export const Block: React.FC<BlockProps> = ({
   // Scoreboard state (local personal score)
   const [score, setScore] = useState(0);
   // Realtime shared state (aggregate + presence + mission + placements)
-  const { sharedScore, adjustSharedScore, setPersonalScore, peers, isConnected, missionId, setMissionId, placed, patchPlaced, missionValues, patchMissionValue, hintMeta, applyHintPenalty } = useRealtimeGame({ roomId, initialScore: 0 });
+  const { sharedScore, sharedQuestionsAnswered, sharedQuestionsCorrect, adjustSharedScore, incrementSharedQuestionsAnswered, incrementSharedQuestionsCorrect, setPersonalScore, peers, isConnected, missionId, setMissionId, placed, patchPlaced, missionValues, patchMissionValue, hintMeta, applyHintPenalty, questionSummary: sharedQuestionSummary, publishQuestionSummary, clearQuestionSummary } = useRealtimeGame({ roomId, initialScore: 0 });
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [questionsCorrect, setQuestionsCorrect] = useState(0);
   
@@ -446,6 +446,24 @@ export const Block: React.FC<BlockProps> = ({
     questionsCorrect: number;
     questionsAnswered: number;
   } | null>(null);
+
+  // Subscribe to shared questionSummary to open/close modal in sync
+  useEffect(() => {
+    if (sharedQuestionSummary) {
+      setQuestionSummaryData({
+        isValid: sharedQuestionSummary.isValid,
+        score: sharedQuestionSummary.score,
+        errors: sharedQuestionSummary.errors,
+        totalScore: sharedQuestionSummary.totalScore,
+        questionsCorrect: sharedQuestionSummary.questionsCorrect,
+        questionsAnswered: sharedQuestionSummary.questionsAnswered,
+      });
+      setShowQuestionSummary(true);
+    } else {
+      setShowQuestionSummary(false);
+      setQuestionSummaryData(null);
+    }
+  }, [sharedQuestionSummary]);
   
   // Get the current circuit template based on difficulty (memoized to prevent refresh on component selection)
   const currentTemplate = useMemo(() => {
@@ -559,11 +577,14 @@ export const Block: React.FC<BlockProps> = ({
     // Start with the first available mission for the selected difficulty
     const mission = generateUniqueMission(selectedDifficulty, []);
     if (mission) {
-  setActiveMissionIdLocal(mission.id);
+      setActiveMissionIdLocal(mission.id);
       setShownMissionIds([mission.id]);
+      // Sync for all players
+      setMissionId(mission.id);
     } else {
-      // No missions available for this difficulty; clear mission mode
-  setActiveMissionIdLocal(null);
+      // No missions; clear mission mode for all
+      setActiveMissionIdLocal(null);
+      setMissionId(null);
     }
   };
 
@@ -644,41 +665,44 @@ export const Block: React.FC<BlockProps> = ({
     });
     
     // Update score and question count
-    const newQuestionsAnswered = questionsAnswered + 1;
-    setQuestionsAnswered(newQuestionsAnswered);
+  const newQuestionsAnswered = questionsAnswered + 1;
+  setQuestionsAnswered(newQuestionsAnswered);
+  // Realtime aggregate
+  incrementSharedQuestionsAnswered();
     
     let newScore = score;
     let newQuestionsCorrect = questionsCorrect;
     
     if (result.isValid) {
-      newScore = score + result.score;
-      newQuestionsCorrect = questionsCorrect + 1;
+  newScore = score + result.score;
+  newQuestionsCorrect = questionsCorrect + 1;
       setScore(newScore);
       setQuestionsCorrect(newQuestionsCorrect);
       // Realtime: add to shared aggregate & update own personal score in presence map
       adjustSharedScore(result.score);
       setPersonalScore(newScore);
+  incrementSharedQuestionsCorrect();
     }
     
     // Show question summary instead of alert
-    setQuestionSummaryData({
+    const summaryPayload = {
       isValid: result.isValid,
       score: result.score,
       errors: result.errors,
       totalScore: newScore,
       questionsCorrect: newQuestionsCorrect,
       questionsAnswered: newQuestionsAnswered
-    });
-    setShowQuestionSummary(true);
+    };
+    // Publish shared summary so all clients open the same modal
+    publishQuestionSummary(summaryPayload);
     
     console.log('Validation result:', result);
   };
 
   // Handle moving to next question from summary
   const handleNextQuestion = () => {
-    // Hide summary
-    setShowQuestionSummary(false);
-    setQuestionSummaryData(null);
+  // Hide summary in sync
+  clearQuestionSummary();
     
     // Reset components for next question
     setPlacedComponents({});
@@ -690,14 +714,32 @@ export const Block: React.FC<BlockProps> = ({
       // Try to get next unique mission in same difficulty avoiding shownMissionIds
       const nextMission = generateUniqueMission(currentDifficulty, shownMissionIds);
       if (nextMission) {
-  setActiveMissionIdLocal(nextMission.id);
+        setActiveMissionIdLocal(nextMission.id);
         setShownMissionIds((prev) => [...prev, nextMission.id]);
+        // Sync mission selection for all players
+        setMissionId(nextMission.id);
       } else {
         // No more missions; mark game complete
         setIsGameComplete(true);
+        // Clear shared mission id
+        setMissionId(null);
       }
     }
   };
+
+  // When shared missionId changes, mirror locally and reset per-mission local state
+  useEffect(() => {
+    // Ignore if equal to avoid loops
+    if (missionId !== activeMissionIdLocal) {
+      setActiveMissionIdLocal(missionId ?? null);
+      if (missionId) {
+        setPlacedComponents({});
+        setSelectedComponentFromUI(null);
+        setMissionComponentValues({});
+        setShownMissionIds((prev) => prev.includes(missionId) ? prev : [...prev, missionId]);
+      }
+    }
+  }, [missionId]);
 
   // Handle dark mode toggle
   const toggleDarkMode = () => {
@@ -767,7 +809,7 @@ export const Block: React.FC<BlockProps> = ({
               selectedComponent={selectedComponentFromUI}
               onValidateCircuit={handleValidateCircuit}
               hasPlacedComponents={Object.keys(placedComponents).length > 0}
-              score={score}
+              score={sharedScore}
               hintMeta={hintMeta}
               onHintUsed={(penaltyPercent) => {
                 // Local personal score penalty
@@ -775,8 +817,8 @@ export const Block: React.FC<BlockProps> = ({
                 // Shared aggregate penalty synced across players
                 applyHintPenalty(penaltyPercent);
               }}
-              questionsAnswered={questionsAnswered}
-              questionsCorrect={questionsCorrect}
+              questionsAnswered={sharedQuestionsAnswered}
+              questionsCorrect={sharedQuestionsCorrect}
               currentDifficulty={currentDifficulty}
               onBackToMenu={handleBackToMenu}
               isDarkMode={isDarkMode}
