@@ -923,9 +923,9 @@ export const Block: React.FC<BlockProps> = ({
   if (isGameComplete) {
     return (
       <GameSummary
-        score={score}
-        questionsAnswered={questionsAnswered}
-        questionsCorrect={questionsCorrect}
+  score={sharedScore}
+  questionsAnswered={sharedQuestionsAnswered}
+  questionsCorrect={sharedQuestionsCorrect}
         difficulty={currentDifficulty}
         onRestart={handleGameRestart}
         onChangeDifficulty={handleChangeDifficultyFromSummary}
