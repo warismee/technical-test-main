@@ -669,10 +669,11 @@ export const Block: React.FC<BlockProps> = ({
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
 
-    // Generate a unique room id and enter waiting room as host
-    const newRoomId = (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
+    // Generate a unique room id that encodes difficulty and enter waiting room as host
+    const baseId = (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
       ? (crypto as any).randomUUID()
       : Math.random().toString(36).slice(2, 10);
+    const newRoomId = `${selectedDifficulty}-${baseId}`;
     setCurrentRoomId(newRoomId);
     setIsWaitingRoom(true);
     setIsHost(true);
@@ -855,6 +856,13 @@ export const Block: React.FC<BlockProps> = ({
     const url = new URL(window.location.href);
     const roomFromUrl = url.searchParams.get('room');
     if (roomFromUrl) {
+      // Extract difficulty prefix from room id: <difficulty>-<uuid>
+      const maybeDiff = roomFromUrl.split('-')[0] as string | undefined;
+      if (maybeDiff === 'easy' || maybeDiff === 'medium' || maybeDiff === 'hard') {
+        if (maybeDiff !== currentDifficulty) {
+          setCurrentDifficulty(maybeDiff);
+        }
+      }
       if (roomFromUrl !== currentRoomId) {
         setCurrentRoomId(roomFromUrl);
       }
@@ -983,6 +991,7 @@ export const Block: React.FC<BlockProps> = ({
               currentTemplate={activeTemplate!} 
               playerCount={playerCount} 
               theme={currentTheme}
+              isHost={isHost}
               onComponentSelected={setSelectedComponentFromUI}
               selectedComponent={selectedComponentFromUI}
               onValidateCircuit={handleValidateCircuit}

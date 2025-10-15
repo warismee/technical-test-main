@@ -8,6 +8,8 @@ interface CircuitUIOverlayProps {
   currentTemplate: CircuitTemplate;
   theme: string;
   playerCount: number;
+  // Whether this client is the host (Player 1). If false/omitted, shows Player 2.
+  isHost?: boolean;
   onComponentSelected?: (componentType: string | null) => void;
   selectedComponent?: string | null;
   onValidateCircuit?: () => void;
@@ -230,6 +232,7 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
   currentTemplate,
   theme,
   playerCount,
+  isHost = false,
   onComponentSelected,
   selectedComponent: selectedFromParent,
   onValidateCircuit,
@@ -395,7 +398,7 @@ export const CircuitUIOverlay: React.FC<CircuitUIOverlayProps> = ({
             )}
           </div>
           
-          <div>Players: {playerCount}</div>
+          <div>{isHost ? 'Player 1' : 'Player 2'}</div>
         </div>
         {derivedMissionTitle && (
           <div className={`text-xs ${textColor} font-semibold mt-2`}>{derivedMissionTitle}</div>
