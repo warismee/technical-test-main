@@ -10,7 +10,8 @@ import {
   MdCancel,
   MdRefresh,
   MdHome,
-  MdArrowForward 
+  MdArrowForward,
+  MdContentCopy,
 } from "react-icons/md";
 import { 
   FaTrophy, 
@@ -290,6 +291,88 @@ interface DifficultyMenuProps {
   onToggleDarkMode?: () => void;
 }
 
+// Waiting Room UI shown until expected players join
+interface WaitingRoomProps {
+  roomId: string;
+  totalPlayers: number;
+  expectedPlayers: number;
+  isDarkMode?: boolean;
+  onToggleDarkMode?: () => void;
+  onCancel: () => void;
+}
+
+function WaitingRoom({ roomId, totalPlayers, expectedPlayers, isDarkMode = false, onToggleDarkMode, onCancel }: WaitingRoomProps) {
+  const shareUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}${window.location.pathname}?room=${roomId}`
+    : `?room=${roomId}`;
+
+  const copyInvite = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch (_) {}
+  };
+
+  return (
+    <div className={`flex items-center justify-center h-full ${isDarkMode ? 'animated-gradient-dark' : 'animated-gradient-light'}`}>
+      <div className={`${isDarkMode 
+        ? 'bg-gray-800/80 text-white backdrop-blur-md' 
+        : 'bg-white/80 backdrop-blur-md'} rounded-lg shadow-xl padding-8 max-w-lg w-full mx-4 relative`}>
+        {onToggleDarkMode && (
+          <button
+            onClick={onToggleDarkMode}
+            className={`absolute top-4 right-4 p-2 rounded-lg transition-colors ${
+              isDarkMode 
+                ? 'bg-gray-700 hover:bg-gray-600 text-yellow-400' 
+                : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
+            }`}
+            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {isDarkMode ? <MdLightMode size={20} /> : <MdDarkMode size={20} />}
+          </button>
+        )}
+
+        <div className="text-center space-y-4">
+          <h2 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Waiting for players…</h2>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Players: <span className="font-semibold">{totalPlayers}</span> / {expectedPlayers}
+          </p>
+
+          <div className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-lg p-4 text-left space-y-2`}>
+            <div className="text-sm opacity-80">Room ID</div>
+            <div className={`font-mono text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>{roomId}</div>
+            <div className="text-sm opacity-80 mt-3">Invite Link</div>
+            <div className="flex gap-2">
+              <input
+                readOnly
+                className={`flex-1 text-sm px-3 py-2 rounded ${isDarkMode ? 'bg-gray-800 text-gray-200 border border-gray-600' : 'bg-white text-gray-800 border border-gray-200'}`}
+                value={shareUrl}
+              />
+              <button
+                onClick={copyInvite}
+                className="btn px-3 py-2 rounded bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
+                title="Copy invite link"
+              >
+                <MdContentCopy /> Copy
+              </button>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <button
+              onClick={onCancel}
+              className="btn w-full py-2 px-4 rounded-lg bg-gray-500 hover:bg-gray-600 text-white font-medium transition-colors"
+            >
+              <span className="flex items-center justify-center gap-2">
+                <MdHome /> Back to Menu
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DifficultyMenu({ onStartGame, theme, isDarkMode = false, onToggleDarkMode }: DifficultyMenuProps) {
   const getDifficultyColor = (diff: "easy" | "medium" | "hard") => {
     switch (diff) {
@@ -403,8 +486,20 @@ export const Block: React.FC<BlockProps> = ({
   
   // Scoreboard state (local personal score)
   const [score, setScore] = useState(0);
+  // Waiting room + room id + host role
+  // Initialize room/waiting state from URL (joiners go straight to waiting room)
+  const initialRoomFromUrl = ((): string | null => {
+    if (typeof window === 'undefined') return null;
+    const url = new URL(window.location.href);
+    return url.searchParams.get('room');
+  })();
+  const [currentRoomId, setCurrentRoomId] = useState<string>(initialRoomFromUrl ?? roomId);
+  const [isWaitingRoom, setIsWaitingRoom] = useState(!!initialRoomFromUrl);
+  const [isHost, setIsHost] = useState(false);
+  const expectedPlayers = 2; // wait until exactly 2 players are connected
+
   // Realtime shared state (aggregate + presence + mission + placements)
-  const { sharedScore, sharedQuestionsAnswered, sharedQuestionsCorrect, adjustSharedScore, incrementSharedQuestionsAnswered, incrementSharedQuestionsCorrect, setPersonalScore, peers, isConnected, missionId, setMissionId, placed, setPlaced, patchPlaced, missionValues, setMissionValues, patchMissionValue, hintMeta, applyHintPenalty, resetHintMeta, questionSummary: sharedQuestionSummary, publishQuestionSummary, clearQuestionSummary } = useRealtimeGame({ roomId, initialScore: 0 });
+  const { sharedScore, sharedQuestionsAnswered, sharedQuestionsCorrect, adjustSharedScore, incrementSharedQuestionsAnswered, incrementSharedQuestionsCorrect, setPersonalScore, peers, isConnected, missionId, setMissionId, placed, setPlaced, patchPlaced, missionValues, setMissionValues, patchMissionValue, hintMeta, applyHintPenalty, resetHintMeta, questionSummary: sharedQuestionSummary, publishQuestionSummary, clearQuestionSummary } = useRealtimeGame({ roomId: currentRoomId, initialScore: 0 });
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [questionsCorrect, setQuestionsCorrect] = useState(0);
   
@@ -562,6 +657,7 @@ export const Block: React.FC<BlockProps> = ({
   // Handle starting the game with selected difficulty
   const handleStartGame = (selectedDifficulty: "easy" | "medium" | "hard") => {
     setCurrentDifficulty(selectedDifficulty);
+    // Reset local state
     setPlacedComponents({});
     setSelectedComponentFromUI(null);
     setShownQuestionIds([]);
@@ -572,24 +668,21 @@ export const Block: React.FC<BlockProps> = ({
     setScore(0);
     setQuestionsAnswered(0);
     setQuestionsCorrect(0);
-    setIsGameStarted(true);
 
-    // Start with the first available mission for the selected difficulty
-    const mission = generateUniqueMission(selectedDifficulty, []);
-    if (mission) {
-      setActiveMissionIdLocal(mission.id);
-      setShownMissionIds([mission.id]);
-      // Sync for all players
-      setMissionId(mission.id);
-  // Reset hint usage at start of mission
-  resetHintMeta();
-  // Clear shared placements and mission values for the new mission
-  setPlaced({});
-  setMissionValues({});
-    } else {
-      // No missions; clear mission mode for all
-      setActiveMissionIdLocal(null);
-      setMissionId(null);
+    // Generate a unique room id and enter waiting room as host
+    const newRoomId = (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
+      ? (crypto as any).randomUUID()
+      : Math.random().toString(36).slice(2, 10);
+    setCurrentRoomId(newRoomId);
+    setIsWaitingRoom(true);
+    setIsHost(true);
+    setIsGameStarted(false);
+
+    // Optionally update URL for easier sharing
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('room', newRoomId);
+      window.history.replaceState({}, '', url.toString());
     }
   };
 
@@ -625,6 +718,7 @@ export const Block: React.FC<BlockProps> = ({
   // Handle going back to main menu
   const handleBackToMenu = () => {
     setIsGameStarted(false);
+    setIsWaitingRoom(false);
     setIsGameComplete(false);
     setPlacedComponents({});
     setSelectedComponentFromUI(null);
@@ -638,6 +732,13 @@ export const Block: React.FC<BlockProps> = ({
   setActiveMissionIdLocal(null);
   // Clear shared mission for everyone when returning to menu
   setMissionId(null);
+    // Reset back to default room
+    setCurrentRoomId(roomId);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('room');
+      window.history.replaceState({}, '', url.toString());
+    }
   };
 
   // Handle when a component is placed in the circuit
@@ -747,6 +848,53 @@ export const Block: React.FC<BlockProps> = ({
       }
     }
   };
+
+  // Allow joining an existing room via URL (?room=...)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const roomFromUrl = url.searchParams.get('room');
+    if (roomFromUrl) {
+      if (roomFromUrl !== currentRoomId) {
+        setCurrentRoomId(roomFromUrl);
+      }
+      // Always enter waiting room when joining via URL as non-host
+      setIsWaitingRoom(true);
+      setIsHost(false);
+      setIsGameStarted(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Host: when enough players are present, start first mission and leave waiting room
+  useEffect(() => {
+    if (!isWaitingRoom || !isHost || isGameStarted) return;
+    const totalPlayers = Array.isArray(peers) ? peers.length : 0; // includes self
+    if (totalPlayers >= expectedPlayers) {
+      const mission = generateUniqueMission(currentDifficulty, []);
+      if (mission) {
+        setActiveMissionIdLocal(mission.id);
+        setShownMissionIds([mission.id]);
+        resetHintMeta();
+        setPlaced({});
+        setMissionValues({});
+        setMissionId(mission.id);
+      } else {
+        setActiveMissionIdLocal(null);
+        setMissionId(null);
+      }
+      setIsWaitingRoom(false);
+      setIsGameStarted(true);
+    }
+  }, [isWaitingRoom, isHost, isGameStarted, peers, currentDifficulty, setMissionId, resetHintMeta, setPlaced, setMissionValues]);
+
+  // Non-host: leave waiting room when a mission is set
+  useEffect(() => {
+    if (isWaitingRoom && !isHost && missionId) {
+      setIsWaitingRoom(false);
+      setIsGameStarted(true);
+    }
+  }, [missionId, isWaitingRoom, isHost]);
 
   // When shared missionId changes, mirror locally and reset per-mission local state
   useEffect(() => {
@@ -908,6 +1056,20 @@ export const Block: React.FC<BlockProps> = ({
   };
 
   // If game hasn't started, show difficulty menu
+  if (isWaitingRoom) {
+    const totalPlayers = Array.isArray(peers) ? peers.length : 0; // includes self
+    return (
+      <WaitingRoom
+        roomId={currentRoomId}
+        totalPlayers={totalPlayers}
+        expectedPlayers={expectedPlayers}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={toggleDarkMode}
+        onCancel={handleBackToMenu}
+      />
+    );
+  }
+
   if (!isGameStarted) {
     return (
       <DifficultyMenu
