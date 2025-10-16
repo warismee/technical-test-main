@@ -179,3 +179,6 @@ Presence entries are created lazily if missing and refreshed on an interval. No 
 
 Open two browser tabs with the same `roomId` to see shared scoring update in real-time after each mission validation.
 
+### Experience ###
+It was such a fun experience! I really enjoyed building the game!
+It reminded me of how much I loved my game development courses back in uni. The main challenges were designing the game flow, drawing circuits with Three.js (since AI couldn’t really fine-tune that), and setting up real-time two-player mode. Once I got it working across two windows, tweaking the components was pretty straightforward. Overall, it was a really fun and valuable experience that boosted my confidence in building games.
